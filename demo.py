@@ -49,39 +49,44 @@ if rank==0:
     bar=Bar(total=len(train_loader)*10, description=' worker progress')
     log=Log(title='Single machine',\
             Axis_title=['iterations', 'time', 'accuracy'],\
-            path='/home/v-haiqwa/Documents/KINGHQ/log/BSP_na.csv',\
+            path='/home/v-haiqwa/Documents/KINGHQ/log/BSP_2.csv',\
             step=21)
 
 iteration=0
 for epoch in range(10):
     for batch_idx, (data, target) in enumerate(train_loader):
-        optimizer.zero_grad()
+        iteration+=1
 
+        
+        optimizer.zero_grad()
         # start_time=time.time()
         
         output = model(data)
         loss = loss_function(output, target)
         
         if rank==0:
-            
             predict=torch.argmax(output, dim=1)
             accuracy=float(torch.sum(predict == target))/data.size(0)
+            log.log([iteration/1, time.time(), accuracy])
             
-            log.log([iteration, time.time(), accuracy])
-
-
         loss.backward()
         # time.sleep(5)
         # if rank==0:
         #     print("computing:%d"%(time.time()-start_time))
 
         # start_time=time.time()
+        
+        
+            
+            # for group in optimizer.param_groups:
+            #     for p in group['params']:
+            #         p.grad/=4
         optimizer.step()
-
+        
         # if rank==0:
         #     print("communication:%d"%(time.time()-start_time))
 
-        iteration+=1
+        
         if rank==0:
             bar()
         if rank==2:

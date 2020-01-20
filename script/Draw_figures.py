@@ -47,7 +47,7 @@ else:
     # user decide
     if args.input:
         files={}
-        filenames=args.input.split(' ')
+        filenames=args.input.split(',')
         for each in filenames:
             files[each] = os.path.join(LOG_DIR, each+'.csv')
         draw_from_csv(files)

@@ -171,14 +171,17 @@ class Worker(Role):
                     self.push_(["version","grads"],["version","grads"])
                 elif self.strategy['push']['action']['what']['solu2']['decision']:
                     self.push_(["version","Accum_push"],["version","grads"])
+                    if self.strategy['push']['clear accumulate']['decision']:
+                        self.zero_data('Accum_push')
                 elif self.strategy['push']['action']['what']['solu3']['decision']:
                     self.push_(["Accum_push"],["grads"])
+                    if self.strategy['push']['clear accumulate']['decision']:
+                        self.zero_data('Accum_push')
                 elif self.strategy['push']['action']['what']['solu4']['decision']:
                     self.push_(["grads"],["grads"])
                 if self.strategy['push']['action']['update']['decision']:
                     self.clock+=1
-        if self.strategy['push']['clear accumulate']['decision']:
-            self.zero_data('Accum_push')
+        
 
         if self.strategy['apply']['accumulate']['decision']:
             self.accumulate(src_keys='grads',dst_keys='Accum_apply')
@@ -188,11 +191,12 @@ class Worker(Role):
                     self.replace(src_keys='Accum_apply', dst_keys='grads')
                 elif self.strategy['apply']['action']['what']['grads']:
                     pass
+                if self.strategy['apply']['clear accumulate']['decision']:
+                    self.zero_data('Accum_apply')
                 self.optimizer.step()
                 if self.strategy['apply']['action']['update']['decision']:
                     self.update(self.strategy['apply']['action']['update']['content'])
-        if self.strategy['apply']['clear accumulate']['decision']:
-            self.zero_data('Accum_apply')
+        
         
         if self.strategy['pull']['when']['Interval']['decision']:
             if self.iterations%self.strategy['pull']['when']['Interval']['interval']==0:

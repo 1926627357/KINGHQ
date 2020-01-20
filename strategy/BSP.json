@@ -149,7 +149,7 @@
                 "Interval": {
                     "decision": true,
                     "average": true,
-                    "interval": 4
+                    "interval": 1
                 },
                 "update": {
                     "decision": false,
@@ -158,8 +158,8 @@
                     ]
                 },
                 "what": {
-                    "Accum_apply": false,
-                    "grads": true
+                    "Accum_apply": true,
+                    "grads": false
                 }
             },
             "clear accumulate": {

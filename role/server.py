@@ -101,6 +101,9 @@ class Server(Role):
                                     )
                         else:
                             self.replace(src_keys='Accum_apply', dst_keys='grads')
+                        if self.strategy['apply']['clear accumulate']['decision']:
+                            # clear the accumulate after apply it
+                            self.zero_data('Accum_apply')
                     elif self.strategy['apply']['action']['what']['grads']:
                         pass
                     
@@ -108,8 +111,7 @@ class Server(Role):
                     self.optimizer.zero_grad()
                     if self.strategy['apply']['action']['update']['decision']:
                         self.update(self.strategy['apply']['action']['update']['content'])
-            if self.strategy['apply']['clear accumulate']['decision']:
-                self.zero_data('Accum_apply')
+            
 
     def handle_push(self, rank):
         # recv the len of the keys
