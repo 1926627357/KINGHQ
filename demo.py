@@ -49,7 +49,7 @@ if rank==0:
     bar=Bar(total=len(train_loader)*10, description=' worker progress')
     log=Log(title='Single machine',\
             Axis_title=['iterations', 'time', 'accuracy'],\
-            path='/home/v-haiqwa/Documents/KINGHQ/log/SSP-3.csv',\
+            path='/home/v-haiqwa/Documents/KINGHQ/log/BSP_na.csv',\
             step=21)
 
 iteration=0
@@ -96,7 +96,7 @@ if rank==0:
     log.data_processing('rolling_mean',data=log.get_column_data('accuracy'),cycle=12)
     log.write()
 
-    
+
 
 print("done")
         
