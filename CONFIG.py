@@ -1,0 +1,8 @@
+CUDA=False
+DATA_DIR='~/Documents/pytorch_project/datasets/CIFAR10/'
+TRAIN_BATCH_SIZE=128
+TEST_BATCH_SIZE=64
+LR=0.001
+EPOCH=100
+PRINT=True
+STALENESS=3

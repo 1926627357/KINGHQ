@@ -1,0 +1,158 @@
+{
+    "network":{
+        "structure":{
+            "parameter server":true,
+            "decentralized":false
+        },
+        "matrix":[]
+    },
+    // usr can config the behaviour of worker here
+    "worker":{
+        // decide when to pull
+        "pull":{
+            "when":{
+                // launch pull request every interval iterations
+                "Interval":{
+                    "decision": true,
+                    "interval": 1
+                },
+                // SSP strategy
+                "staleness":{
+                    "decision": false,
+                    "staleness": 3
+                }
+            },
+            // decide to pull what
+            "what":{
+                "solu1":{
+                    "decision": false,
+                    "content": ["params","clock_slow","global_version"]
+                },
+                "solu2":{
+                    "decision": false,
+                    "content": ["params","clock_slow"]
+                },
+                "solu3":{
+                    "decision": false,
+                    "content": ["params","global_version"]
+                },
+                "solu4":{
+                    "decision": true,
+                    "content": ["params"]
+                }
+            }
+        },
+        // set a barrier?
+        "barrier":{
+            "decision": false
+        },
+
+        // decide how to implement push action
+        "push":{
+            "accumulate":{
+                "decision": false
+            },
+            "action":{
+                "Interval":{
+                    "decision":true,
+                    "interval": 1
+                },
+                "what":{
+                    "solu1":{
+                        "decision":false,
+                        "content":["version","grads"]
+                    },
+                    "solu2":{
+                        "decision":false,
+                        "content":["version","Accum_push"]
+                    },
+                    "solu3":{
+                        "decision":false,
+                        "content":["Accum_push"]
+                    },
+                    "solu4":{
+                        "decision":true,
+                        "content":["grads"]
+                    }
+                },
+                "update":{
+                    "decision": false,
+                    "content":["clock"]
+                }
+            },
+            "clear accumulate":{
+                "decision": false
+            }
+        },
+
+        // decide how to implement apply action
+        "apply":{
+            "accumulate":{
+                "decision": false
+            },
+            "action":{
+                "Interval":{
+                    "decision":true,
+                    "interval": 1
+                },
+                "update":{
+                    "decision": false,
+                    "content":["version"]
+                },
+                "what":{
+                    "Accum_apply":false,
+                    "grads":true
+                }
+                
+            },
+            "clear accumulate":{
+                "decision": false
+            }
+        }
+    },
+
+    // usr can config the behaviour of server here
+    "server":{
+        // decide the check strategy
+        "check":{
+            "staleness":{
+                "decision":false,
+                "staleness": 3
+            },
+            "version": {
+                "decision":false
+            },
+            "default": {
+                "decision":true
+            }
+        },
+
+        // decide how to implement apply action
+        "apply":{
+            "staleness":{
+                "decision":false
+            },
+            "accumulate":{
+                "decision": false
+            },
+            "action":{
+                "Interval":{
+                    "decision":true,
+                    "average":true,
+                    "interval": 1
+                },
+                "update":{
+                    "decision": false,
+                    "content":["global_version"]
+                },
+                "what":{
+                    "Accum_apply":false,
+                    "grads":true
+                }
+            },
+            "clear accumulate":{
+                "decision": false
+            }
+        }
+    }
+}

@@ -1,0 +1,170 @@
+{
+    "network": {
+        "structure": {
+            "parameter server": true,
+            "decentralized": false
+        },
+        "matrix": []
+    },
+    "worker": {
+        "pull": {
+            "when": {
+                "Interval": {
+                    "decision": false,
+                    "interval": 1
+                },
+                "staleness": {
+                    "decision": true,
+                    "staleness": 3
+                }
+            },
+            "what": {
+                "solu1": {
+                    "decision": false,
+                    "content": [
+                        "params",
+                        "clock_slow",
+                        "global_version"
+                    ]
+                },
+                "solu2": {
+                    "decision": true,
+                    "content": [
+                        "params",
+                        "clock_slow"
+                    ]
+                },
+                "solu3": {
+                    "decision": false,
+                    "content": [
+                        "params",
+                        "global_version"
+                    ]
+                },
+                "solu4": {
+                    "decision": false,
+                    "content": [
+                        "params"
+                    ]
+                }
+            }
+        },
+        "barrier": {
+            "decision": false
+        },
+        "push": {
+            "accumulate": {
+                "decision": false
+            },
+            "action": {
+                "Interval": {
+                    "decision": true,
+                    "interval": 1
+                },
+                "what": {
+                    "solu1": {
+                        "decision": false,
+                        "content": [
+                            "version",
+                            "grads"
+                        ]
+                    },
+                    "solu2": {
+                        "decision": false,
+                        "content": [
+                            "version",
+                            "Accum_push"
+                        ]
+                    },
+                    "solu3": {
+                        "decision": false,
+                        "content": [
+                            "Accum_push"
+                        ]
+                    },
+                    "solu4": {
+                        "decision": true,
+                        "content": [
+                            "grads"
+                        ]
+                    }
+                },
+                "update": {
+                    "decision": true,
+                    "content": [
+                        "clock"
+                    ]
+                }
+            },
+            "clear accumulate": {
+                "decision": false
+            }
+        },
+        "apply": {
+            "accumulate": {
+                "decision": false
+            },
+            "action": {
+                "Interval": {
+                    "decision": true,
+                    "interval": 1
+                },
+                "update": {
+                    "decision": false,
+                    "content": [
+                        "version"
+                    ]
+                },
+                "what": {
+                    "Accum_apply": false,
+                    "grads": true
+                }
+            },
+            "clear accumulate": {
+                "decision": false
+            }
+        }
+    },
+    "server": {
+        "check": {
+            "staleness": {
+                "decision": true,
+                "staleness": 3
+            },
+            "version": {
+                "decision": false
+            },
+            "default": {
+                "decision": false
+            }
+        },
+        "apply": {
+            "staleness": {
+                "decision": false
+            },
+            "accumulate": {
+                "decision": false
+            },
+            "action": {
+                "Interval": {
+                    "decision": true,
+                    "average": false,
+                    "interval": 1
+                },
+                "update": {
+                    "decision": false,
+                    "content": [
+                        "global_version"
+                    ]
+                },
+                "what": {
+                    "Accum_apply": false,
+                    "grads": true
+                }
+            },
+            "clear accumulate": {
+                "decision": false
+            }
+        }
+    }
+}
