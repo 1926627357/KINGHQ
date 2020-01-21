@@ -6,6 +6,7 @@
 #   Bar: show the progress in our process
 #   CSV: handle .csv file
 #   Figure: draw experiment figure
+#   Dice: generate a random number
 
 from KINGHQ.utils.KVStore import KVStore
 import torch.distributed as dist
@@ -203,8 +204,14 @@ class Figure(object):
         # add numpy data into the figure
         self.ax.plot(xdata, ydata, label=label)
 
-    
-
+import random
+class Dice(object):
+    # it's used to generate a integer randomly like a dice
+    def __init__(self, side):
+        # the dice will generate the number: 1,2,3,...,side with equal probability
+        self.side=side
+    def __call__(self):
+        return random.randint(1,self.side)
 
     
     

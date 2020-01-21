@@ -36,3 +36,9 @@ solution：
 2020/1/20 16:47
 实验时发现BSP_na的表现与Single_16_4表现不一致，存在bug，原因就在于我server端的clear accumulate的逻辑
 有问题，我写的变成了每一轮都要clear accumulate了。
+
+2020/1/21 12:05
+我将今晚讨论到的问题罗列如下：
+	1. single-server的设计是否能够保证：a.performance可接受b.不会损害到synchronization
+	2. 同质环境下，SSP，BSP，ASP三者可能在收敛上区别不大，可以考虑给每个worker都加入随机的扰动来进行实验
+	3. 找一些合适的neural network model进行实验，这一部分可以咨询这边做算法的人

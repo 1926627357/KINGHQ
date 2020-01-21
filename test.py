@@ -25,8 +25,11 @@
 #             borderaxespad=0., ncol=200, fontsize='small')
 # fig.savefig("test0.png")
 
-import os
-a='a/'
-b='b'
-print(os.path.join(a,b))
+import random
 
+number=[]
+
+for _ in range(100):
+    number.append(random.randint(1,10))
+
+print(sorted(number))
