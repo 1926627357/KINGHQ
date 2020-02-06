@@ -40,6 +40,7 @@ def KINGHQ_Optimizer(Optimizer):
     if os.environ['KINGHQ_Distributed']=='False':
         # single process
         matrix=[[1]]
+        # strategy=load_strategy('/home/v-haiqwa/Documents/KINGHQ/strategy/Single.json')
         worker=Worker(KVStore,matrix,Optimizer,util.get_rank(),strategy)
         worker.register_KVStore()
         return cls(Optimizer.param_groups,worker)

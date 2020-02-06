@@ -2,7 +2,7 @@ import sys
 sys.path.append('/home/v-haiqwa/Documents/')
 import KINGHQ
 from KINGHQ.models import vgg,lenet
-from KINGHQ.utils.utils import Log,Bar
+from KINGHQ.utils.utils import Log,Bar,Dice
 import torch.nn.functional as F
 import torch
 import torch.nn as nn
@@ -31,7 +31,7 @@ train_dataset = \
 
 # Horovod: use DistributedSampler to partition the training data.
 train_sampler = torch.utils.data.distributed.DistributedSampler(
-    train_dataset, num_replicas=KINGHQ.size(), rank=KINGHQ.rank())
+    train_dataset, num_replicas=KINGHQ.size(), rank=KINGHQ.rank(), shuffle=True)
 train_loader = torch.utils.data.DataLoader(
     train_dataset, batch_size=16, sampler=train_sampler)
 
@@ -49,15 +49,15 @@ if rank==0:
     bar=Bar(total=len(train_loader)*10, description=' worker progress')
     log=Log(title='Single machine',\
             Axis_title=['iterations', 'time', 'accuracy'],\
-            path='/home/v-haiqwa/Documents/KINGHQ/log/BSP_2.csv',\
+            path='/home/v-haiqwa/Documents/KINGHQ/log/tmp.csv',\
             step=21)
-
+Dice=Dice(6)
 iteration=0
 for epoch in range(10):
+    train_sampler.set_epoch(epoch)
     for batch_idx, (data, target) in enumerate(train_loader):
         iteration+=1
 
-        
         optimizer.zero_grad()
         # start_time=time.time()
         
@@ -81,7 +81,10 @@ for epoch in range(10):
             # for group in optimizer.param_groups:
             #     for p in group['params']:
             #         p.grad/=4
+        
+        time.sleep(1)
         optimizer.step()
+        print("worker: %d"%rank)
         
         # if rank==0:
         #     print("communication:%d"%(time.time()-start_time))
@@ -89,21 +92,23 @@ for epoch in range(10):
         
         if rank==0:
             bar()
-        if rank==2:
-            time.sleep(0.012)
+        
+        time.sleep(0.002*Dice()-0.002)
+        
+    
+
 
         
     
 
 if rank==0:
     log.data_processing('interval', data=log.get_column_data('time'))
-    
     log.data_processing('rolling_mean',data=log.get_column_data('accuracy'),cycle=12)
     log.write()
 
 
 
-print("done")
+print("worker:%d done"%rank)
         
 
 

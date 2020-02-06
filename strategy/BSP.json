@@ -149,7 +149,7 @@
                 "Interval": {
                     "decision": true,
                     "average": true,
-                    "interval": 1
+                    "interval": 4
                 },
                 "update": {
                     "decision": false,

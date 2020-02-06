@@ -1,35 +1,26 @@
-# import matplotlib
-# import matplotlib.pyplot as plt
-# import pandas as pd
+# import torch
+# import torchvision
+# from torchvision import datasets
+# import torchvision.transforms as transforms
+# import torch.distributed as dist
+# dist.init_process_group(backend='gloo')
 
+# train_dataset = \
+#     datasets.MNIST('~/Documents/pytorch_project/dataset/MNIST'+'data-%d'%dist.get_rank(), train=True, download=True,
+#                    transform=transforms.Compose([
+#                        transforms.ToTensor(),
+#                        transforms.Normalize((0.1307,), (0.3081,))
+#                    ]))
 
+# train_sampler = torch.utils.data.distributed.DistributedSampler(
+#     train_dataset, num_replicas=dist.get_world_size(), rank=dist.get_rank(), shuffle=False)
+# train_loader = torch.utils.data.DataLoader(
+#     train_dataset, batch_size=16, sampler=train_sampler)
 
-# fig, ax = plt.subplots()
+# train_sampler.set_epoch(2)
+# train_loader=list(train_loader)
 
-# csv_data=pd.read_csv('./log/ASP.csv')
-# # print(csv_data)
-# iterations=csv_data["iterations"].values
-# accuracy=csv_data["accuracy"].values
-# ax.plot(iterations, accuracy, label='ASP')
+# print("rank: %d"%dist.get_rank()+str(train_loader[0][1]))
 
-# csv_data=pd.read_csv('./log/BSP.csv')
-# # print(csv_data)
-# iterations=csv_data["iterations"].values
-# accuracy=csv_data["accuracy"].values
-# ax.plot(iterations, accuracy, label='BSP')
-
-# ax.set(xlabel='iterations', ylabel='accuracy',
-#        title='iterations-accuracy')
-# ax.grid()
-# ax.legend(bbox_to_anchor=(0., 1.05, 1., .102), loc=0, mode="expand",
-#             borderaxespad=0., ncol=200, fontsize='small')
-# fig.savefig("test0.png")
-
-import random
-
-number=[]
-
-for _ in range(100):
-    number.append(random.randint(1,10))
-
-print(sorted(number))
+import time
+time.sleep(-0.002)

@@ -42,3 +42,6 @@ solution：
 	1. single-server的设计是否能够保证：a.performance可接受b.不会损害到synchronization
 	2. 同质环境下，SSP，BSP，ASP三者可能在收敛上区别不大，可以考虑给每个worker都加入随机的扰动来进行实验
 	3. 找一些合适的neural network model进行实验，这一部分可以咨询这边做算法的人
+
+2020/2/5 12:13
+fix了单节点运行梯度不更新的bug，原因就是strategy没有load正确的Single.json文件
