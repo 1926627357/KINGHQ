@@ -22,5 +22,3 @@
 
 # print("rank: %d"%dist.get_rank()+str(train_loader[0][1]))
 
-import time
-time.sleep(-0.002)

@@ -45,3 +45,9 @@ solution：
 
 2020/2/5 12:13
 fix了单节点运行梯度不更新的bug，原因就是strategy没有load正确的Single.json文件
+
+2020/2/8 11:07
+meeting:
+	1. 能否保证convergence的正确性
+	2. 如何去测实验的数据
+	3. 如何去slow worker，人工制造出heter的环境

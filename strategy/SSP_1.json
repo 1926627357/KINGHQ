@@ -15,7 +15,7 @@
                 },
                 "staleness": {
                     "decision": true,
-                    "staleness": 0
+                    "staleness": 1
                 }
             },
             "what": {
@@ -28,7 +28,7 @@
                     ]
                 },
                 "solu2": {
-                    "decision": false,
+                    "decision": true,
                     "content": [
                         "params",
                         "clock_slow"
@@ -42,7 +42,7 @@
                     ]
                 },
                 "solu4": {
-                    "decision": true,
+                    "decision": false,
                     "content": [
                         "params"
                     ]
@@ -106,8 +106,8 @@
             },
             "action": {
                 "Interval": {
-                    "decision": false,
-                    "interval": 0
+                    "decision": true,
+                    "interval": 1
                 },
                 "update": {
                     "decision": false,
@@ -129,7 +129,7 @@
         "check": {
             "staleness": {
                 "decision": true,
-                "staleness": 0
+                "staleness": 1
             },
             "version": {
                 "decision": false
@@ -143,13 +143,13 @@
                 "decision": false
             },
             "accumulate": {
-                "decision": true
+                "decision": false
             },
             "action": {
                 "Interval": {
                     "decision": true,
-                    "average": true,
-                    "interval": 3
+                    "average": false,
+                    "interval": 1
                 },
                 "update": {
                     "decision": false,
@@ -158,12 +158,12 @@
                     ]
                 },
                 "what": {
-                    "Accum_apply": true,
-                    "grads": false
+                    "Accum_apply": false,
+                    "grads": true
                 }
             },
             "clear accumulate": {
-                "decision": true
+                "decision": false
             }
         }
     }
