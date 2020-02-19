@@ -53,7 +53,7 @@ if rank==0:
     bar=Bar(total=len(train_loader)*10, description=' worker progress')
     log=Log(title='horovod benchmark',\
             Axis_title=['iterations', 'time', 'accuracy'],\
-            path='/home/v-haiqwa/Documents/KINGHQ/log/hvd_w7.csv',\
+            path='/home/v-haiqwa/Documents/KINGHQ/log/hvd_w1.csv',\
             step=21)
 iteration=0
 for epoch in range(10):
@@ -77,6 +77,8 @@ for epoch in range(10):
 
         if rank==0:
             bar()
+        break
+    break
             
 
 if CUDA:
