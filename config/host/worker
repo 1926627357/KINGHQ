@@ -1,0 +1,5 @@
+{
+    "worker1": 10.150.144.122
+    #worker1 is the master worker
+    "server2": 10.190.175.223
+}
