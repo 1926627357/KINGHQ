@@ -2,7 +2,7 @@ v-haiqwa@10.150.144.122:1
 v-haiqwa@10.190.175.223:1
 
 /home/v-haiqwa/anaconda3/envs/pytorch/bin/mpirun -np 4 \
--H 10.150.144.122:1,10.190.175.223:3 \
+-H 10.190.175.223:2,10.150.144.122:2 \
 /home/v-haiqwa/anaconda3/envs/pytorch/bin/python /home/v-haiqwa/Documents/KINGHQ/test/distributed.py
 
 -bind-to none -map-by slot \

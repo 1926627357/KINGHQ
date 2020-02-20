@@ -17,7 +17,7 @@ parser.add_argument('-c',"--consistency",  type=str, default= "",
                     help="The consistency model configuration file")
 
 parser.add_argument('-i',"--input",  type=str, default= "",
-                    help="The input training programme file")
+                    help="The programme file")
 
 args = parser.parse_args()
 
@@ -75,5 +75,17 @@ else:
         machine2role[ip] = []
     machine2role[ip].append("master")
 
-print(machine2role)
+
+# print(machine2role)
+
+for ip,role_list in machine2role.items():
+    for i in range(len(role_list)):
+        role_list[i]+='\n'
+    filepath = ROOT_DIR + "/config/send/" + ip 
+    with open(filepath,'w') as f:
+        f.writelines(role_list)
+    excuteCommand('ssh v-haiqwa@'+ip+' '+'rm -rf /home/v-haiqwa/Documents/KINGHQ/config/recv/*')
+    excuteCommand('scp '+filepath+' v-haiqwa@'+ip+':/home/v-haiqwa/Documents/KINGHQ/config/recv/'+ip)
+    
+
 

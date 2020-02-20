@@ -7,9 +7,10 @@ import os
 # os.environ['RANK']='0'
 # os.environ['WORLD_SIZE']='1'
 dist.init_process_group(backend='mpi')
-# import time
-# time.sleep(1)
+
 t = torch.tensor([float(dist.get_rank())])
 dist.broadcast(t,src=0)
+import time
+time.sleep(1)
 print("I'am the rank:%d"%dist.get_rank())
 print(t.tolist())
