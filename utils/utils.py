@@ -40,7 +40,7 @@ class Utils:
         else:
             # multi-machine
             for root_dir,_,filename in os.walk(self.role_path):
-                with open(os.path.join(root_dir,filename),"r+") as f:
+                with open(os.path.join(root_dir,filename[0]),"r+") as f:
                     fcntl.flock(f.fileno(), fcntl.LOCK_EX)
                     lines = f.readlines()
                     line=lines.pop(0)

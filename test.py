@@ -8,3 +8,4 @@ from KINGHQ.utils.utils import Utils
 
 comm = Utils()
 comm.init()
+# print("")
