@@ -8,3 +8,5 @@ v-haiqwa@10.190.175.223:1
 -bind-to none -map-by slot \
 -x NCCL_DEBUG=INFO -x LD_LIBRARY_PATH -x PATH \
 -mca pml ob1 -mca btl ^openib \
+
+python ./script/launch.py -s config/host/server -w config/host/worker -m config/host/master -c SSP -i test.py

@@ -8,4 +8,3 @@ import os
 # os.environ['WORLD_SIZE']='1'
 dist.init_process_group(backend='mpi')
 print("I'am the rank:%d"%dist.get_rank())
-t=torch.tensor()
