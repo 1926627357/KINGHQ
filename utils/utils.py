@@ -50,15 +50,16 @@ class Utils:
                     f.writelines(lines)
             self.role = line.replace('\n','')
             # print("I'm rank-{} and I'am the {}".format(self.rank,self.role))
-            print("PHASE 2 GLOBALLY EXCHANGE INFORMATION")
+            if self.rank==0:
+                print("PHASE 2 GLOBALLY EXCHANGE INFORMATION")
             request=RoExReqMsg(value=self.role)
             request.send()
             response=request.wait()
             # e.g. {0: "master", 1:"server"}
             self.rank_role_map=response.value
-            print("END")
-            print("*"*30)
             if self.rank==0:
+                print("END")
+                print("*"*30)
                 print(self.rank_role_map)
         
     
