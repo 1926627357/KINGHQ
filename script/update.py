@@ -8,4 +8,4 @@ with open(path,"r") as load_f:
 
 os.popen('cd /home/v-haiqwa/Documents/KINGHQ/ && git add . && git commit -m \"update\" && git push origin master')
 for hostname,ip in slaverlist.items():
-    os.popen("ssh v-haiqwa@"+ip+" cd /home/v-haiqwa/Documents/KINGHQ/ && git pull")
+    print("ssh v-haiqwa@"+ip+" cd /home/v-haiqwa/Documents/KINGHQ/ && git pull")
