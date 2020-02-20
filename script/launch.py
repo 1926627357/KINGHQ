@@ -49,12 +49,17 @@ if not args.consistency:
 
 machine2role = dict()
 
+master_worker=True
 for ip in worker:
     if ip in machine2role.keys():
         pass
     else:
         machine2role[ip] = []
-    machine2role[ip].append("worker")
+    if master_worker:
+        machine2role[ip].append("masterworker")
+        master_worker=False
+    else:
+        machine2role[ip].append("worker")
 for ip in server:
     if ip in machine2role.keys():
         pass
@@ -78,7 +83,16 @@ else:
 
 # print(machine2role)
 
+print("*"*50)
+print("PHASE 1 WORKLOAD ASSIGNMENT")
+print("Begin to transform programme file and config for every machine!")
+
+
+size=0
+local_size=dict()
 for ip,role_list in machine2role.items():
+    size+=len(role_list)
+    local_size[ip]=len(role_list)
     for i in range(len(role_list)):
         role_list[i]+='\n'
     filepath = ROOT_DIR + "/config/send/" + ip 
@@ -90,7 +104,15 @@ for ip,role_list in machine2role.items():
 
     excuteCommand('ssh v-haiqwa@'+ip+' '+'rm -rf /home/v-haiqwa/Documents/KINGHQ/config/exefile')
     excuteCommand('ssh v-haiqwa@'+ip+' '+'mkdir /home/v-haiqwa/Documents/KINGHQ/config/exefile')
-    excuteCommand('scp '+args.input+' v-haiqwa@'+ip+':/home/v-haiqwa/Documents/KINGHQ/config/recv/')
+    excuteCommand('scp '+args.input+' v-haiqwa@'+ip+':/home/v-haiqwa/Documents/KINGHQ/config/exefile/')
+
+print("size: %d"%size)
+print("local size ",local_size)
     
+
+print("END")
+print("*"*50)
+
+# MPI_COMMAND = 
 
 

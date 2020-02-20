@@ -13,6 +13,8 @@ import torch.distributed as dist
 import torch
 import json5
 import os
+import fcntl
+# import sys
 class Utils:
     def __init__(self):
         self.Communication_Tag={'request':0,'push_num':1,'push_key':2,'pull_num':3,'pull_key':4}
@@ -26,24 +28,26 @@ class Utils:
         self.KVStore.register_new_key(self.request_map,name='request_map')
         self.strategy=None
 
+        self.role_path="/home/v-haiqwa/Documents/KINGHQ/config/recv/"
+
     def init(self):
-        if not ('MASTER_ADDR' in os.environ and 'MASTER_PORT' in os.environ):
-            # it illustrates that the user launch programme in single process
-            
-            os.environ['MASTER_ADDR'] = '127.0.0.1'
-            os.environ['MASTER_PORT'] = '8889'
-            os.environ['RANK']='0'
-            os.environ['WORLD_SIZE']='1'
-            os.environ['KINGHQ_Distributed']='False'
-        else:
-            os.environ['KINGHQ_Distributed']='True'
-        
-        
-        dist.init_process_group(backend='gloo')
-        self.rank=dist.get_rank()
+        dist.init_process_group(backend='mpi')
         self.size=dist.get_world_size()
-        if self.size<=1:
-            os.environ['KINGHQ_Distributed']='False'
+        self.rank=dist.get_rank()
+        if self.size == 1:
+            # single machine situation
+            pass
+        else:
+            # multi-machine
+            for root_dir,_,filename in os.walk(self.role_path):
+                with open(os.path.join(root_dir,filename),"r+") as f:
+                    fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+                    lines = f.readlines()
+                    line=lines.pop(0)
+                    f.seek(0)
+                    f.writelines(lines)
+            self.role = line.replace('\n','')
+            print("I'm rank-{} and I'am the {}".format(self.rank,self.role))
         
 
     def load_strategy(self, path):
