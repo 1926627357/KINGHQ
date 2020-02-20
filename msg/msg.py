@@ -67,7 +67,7 @@ class RoExReqMsg(ReqMsg):
         self.send_value = [[i,0] for i in range(dist.get_world_size())]
         self.send_value[dist.get_rank()][1]=self.role_map[self.value]
         # [[0,1],[1,0],[2,0]], e.g. rank 0 is the masterworker
-        self.send_value = torch.tensor(send_value, dtype=torch.float)
+        self.send_value = torch.tensor(self.send_value, dtype=torch.float)
         
     
     def send(self):
