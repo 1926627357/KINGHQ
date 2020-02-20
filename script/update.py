@@ -19,4 +19,4 @@ print(excuteCommand('cd /home/v-haiqwa/Documents/KINGHQ/ && rm -rf ./config/recv
 # os.popen('cd /home/v-haiqwa/Documents/KINGHQ/ && git add . && git commit -m \"update\" && git push origin master')
 for hostname,ip in slaverlist.items():
     print("="*30)
-    print(excuteCommand('ssh v-haiqwa@'+ip+' \"cd /home/v-haiqwa/Documents/KINGHQ/ ; rm -rf ./config/recv/* ; git pull\"'))
+    print(excuteCommand('ssh v-haiqwa@'+ip+' \"cd /home/v-haiqwa/Documents/KINGHQ/ ; rm -rf ./config/recv/* ; rm -rf ./config/exefile/* ; git pull\"'))
