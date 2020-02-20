@@ -9,3 +9,7 @@ from KINGHQ.utils.utils import Utils
 comm = Utils()
 comm.init()
 # print("")
+# import torch
+# t=torch.tensor([1.])
+# t=t.type(torch.int)
+# print(t)

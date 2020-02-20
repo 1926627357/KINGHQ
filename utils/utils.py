@@ -9,11 +9,13 @@
 #   Dice: generate a random number
 
 from KINGHQ.utils.KVStore import KVStore
+from KINGHQ.msg.msg import RoExReqMsg,RoExResMsg
 import torch.distributed as dist
 import torch
 import json5
 import os
 import fcntl
+
 # import sys
 class Utils:
     def __init__(self):
@@ -47,8 +49,19 @@ class Utils:
                     f.seek(0)
                     f.writelines(lines)
             self.role = line.replace('\n','')
-            print("I'm rank-{} and I'am the {}".format(self.rank,self.role))
+            # print("I'm rank-{} and I'am the {}".format(self.rank,self.role))
+            print("PHASE 2 GLOBALLY EXCHANGE INFORMATION")
+            request=RoExReqMsg(value=self.role)
+            request.send()
+            response=request.wait()
+            # e.g. {0: "master", 1:"server"}
+            self.rank_role_map=response.value
+            print("END")
+            print("*"*30)
+            if self.rank==0:
+                print(self.rank_role_map)
         
+    
 
     def load_strategy(self, path):
         # load the strategy through the json file
@@ -62,8 +75,12 @@ class Utils:
     def get_KVStore(self):
         return self.KVStore
 
-    def is_server(self):
-        if self.rank==0:
+    def get_role_rank_map(self):
+        pass
+
+    def is_masterworker(self):
+        # Determine if a node is the masterworker
+        if(self.role=="masterworker"):
             return True
         else:
             return False
@@ -75,27 +92,9 @@ class Utils:
         return self.size
     
     def get_worker_size(self):
-        if os.environ['KINGHQ_Distributed']=='False':
-            # single process
-            return 1
-        if self.strategy['network']['structure']['parameter server']:
-            if self.is_server():
-                # server
-                return 1
-            return self.size-1
-        else:
-            return self.size
+        pass
     def get_worker_rank(self):
-        if os.environ['KINGHQ_Distributed']=='False':
-            # single process
-            return 0
-        if self.strategy['network']['structure']['parameter server']:
-            if self.is_server():
-                # server
-                return 0
-            return self.rank-1
-        else:
-            return self.rank
+        pass
 
 # record the experiment data
 import pandas as pd

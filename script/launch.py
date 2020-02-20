@@ -121,7 +121,7 @@ for ip,s in local_size.items():
 MPI_COMMAND=MPI_COMMAND[:-1]
 
 
-MPI_COMMAND+=" /home/v-haiqwa/anaconda3/envs/pytorch/bin/python "+"/home/v-haiqwa/Documents/KINGHQ/config/exefile/"+args.input.split('/')[-1]
+MPI_COMMAND+=" /home/v-haiqwa/anaconda3/envs/pytorch/bin/python -B "+"/home/v-haiqwa/Documents/KINGHQ/config/exefile/"+args.input.split('/')[-1]
 
 
 print(excuteCommand(MPI_COMMAND))
