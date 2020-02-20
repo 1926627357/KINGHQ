@@ -84,8 +84,13 @@ for ip,role_list in machine2role.items():
     filepath = ROOT_DIR + "/config/send/" + ip 
     with open(filepath,'w') as f:
         f.writelines(role_list)
-    excuteCommand('ssh v-haiqwa@'+ip+' '+'rm -rf /home/v-haiqwa/Documents/KINGHQ/config/recv/*')
-    excuteCommand('scp '+filepath+' v-haiqwa@'+ip+':/home/v-haiqwa/Documents/KINGHQ/config/recv/'+ip)
+    excuteCommand('ssh v-haiqwa@'+ip+' '+'rm -rf /home/v-haiqwa/Documents/KINGHQ/config/recv')
+    excuteCommand('ssh v-haiqwa@'+ip+' '+'mkdir /home/v-haiqwa/Documents/KINGHQ/config/recv')
+    excuteCommand('scp '+filepath+' v-haiqwa@'+ip+':/home/v-haiqwa/Documents/KINGHQ/config/recv/')
+
+    excuteCommand('ssh v-haiqwa@'+ip+' '+'rm -rf /home/v-haiqwa/Documents/KINGHQ/config/exefile')
+    excuteCommand('ssh v-haiqwa@'+ip+' '+'mkdir /home/v-haiqwa/Documents/KINGHQ/config/exefile')
+    excuteCommand('scp '+args.input+' v-haiqwa@'+ip+':/home/v-haiqwa/Documents/KINGHQ/config/recv/')
     
 
 
