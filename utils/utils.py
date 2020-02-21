@@ -34,13 +34,21 @@ class Utils:
 
     def init(self):
         dist.init_process_group(backend='mpi')
-        self.size=dist.get_world_size()
-        self.rank=dist.get_rank()
-        if self.size == 1:
+        self.world_size=dist.get_world_size()
+        self.world_rank=dist.get_rank()
+        if self.world_size == 1:
             # single machine situation
-            pass
+            self.worker_size=1
+            self.worker_rank=0
+            self.local_size=1
+            self.local_rank=0
+            self.local_worker_size=1
+            self.local_worker_rank=0
         else:
             # multi-machine
+            # note that the environment var is in a format of string
+            self.local_size=int(os.environ['OMPI_COMM_WORLD_LOCAL_SIZE'])
+            self.local_rank=int(os.environ['OMPI_COMM_WORLD_LOCAL_RANK'])
             for root_dir,_,filename in os.walk(self.role_path):
                 with open(os.path.join(root_dir,filename[0]),"r+") as f:
                     fcntl.flock(f.fileno(), fcntl.LOCK_EX)
@@ -50,17 +58,26 @@ class Utils:
                     f.writelines(lines)
             self.role = line.replace('\n','')
             # print("I'm rank-{} and I'am the {}".format(self.rank,self.role))
-            if self.rank==0:
+            if self.world_rank==0:
                 print("PHASE 2 GLOBALLY EXCHANGE INFORMATION")
             request=RoExReqMsg(value=self.role)
             request.send()
             response=request.wait()
             # e.g. {0: "master", 1:"server"}
             self.rank_role_map=response.value
-            if self.rank==0:
+            if self.world_rank==3:
                 print("END")
                 print("*"*30)
                 print(self.rank_role_map)
+            self.worker_size=0
+            self.worker_rank=0
+            for rank,role in self.rank_role_map.items():
+                if role=="masterworker" or role=="worker":
+                    self.worker_size+=1
+                    if rank==self.world_rank:
+                        self.worker_rank=self.worker_size-1
+            
+                
         
     
 
@@ -86,16 +103,23 @@ class Utils:
         else:
             return False
 
-    def get_rank(self):
-        return self.rank
-
-    def get_size(self):
-        return self.size
-    
+    # here are normal apis here
+    def get_world_rank(self):
+        return self.world_rank
+    def get_world_size(self):
+        return self.world_size
+    def get_local_rank(self):
+        return self.local_rank
+    def get_local_size(self):
+        return self.local_size
     def get_worker_size(self):
-        pass
+        return self.worker_size
     def get_worker_rank(self):
-        pass
+        return self.worker_rank
+    def get_local_worker_size(self):
+        return self.local_worker_size
+    def get_local_worker_rank(self):
+        return self.local_worker_rank
 
 # record the experiment data
 import pandas as pd

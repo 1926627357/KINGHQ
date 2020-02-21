@@ -53,5 +53,27 @@ meeting:
 	3. 如何去slow worker，人工制造出heter的环境
 
 2020/2/20 16:05
+conda create --name pytorch python=3.6
 需要的依赖库（持续补充）：
-pandas, json5, tqdm, matplotlib
+conda install pandas json5 tqdm matplotlib
+
+anaconda 
+conda create --name pytorch python=3.6
+conda remove -n pytorch --all
+
+pytorch install:
+conda install numpy ninja pyyaml mkl mkl-include setuptools cmake cffi
+conda install -c pytorch magma-cuda100
+git clone --recursive https://github.com/pytorch/pytorch
+cd pytorch
+# if you are updating an existing checkout
+# git submodule sync
+# git submodule update --init --recursive
+conda install -c conda-forge openmpi
+export CMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"}
+python setup.py install
+
+torchvision install
+git clone https://github.com/pytorch/vision.git
+conda install pillow
+python setup.py install
