@@ -77,7 +77,8 @@ class Utils:
                     if rank==self.world_rank:
                         self.worker_rank=self.worker_size-1
             # the min and max world rank in that machine
-            if self.world_rank==4:
+            # if self.world_rank==4:
+            if True:
 
                 local_min_rank=self.world_rank-self.local_rank
                 local_max_rank=self.world_rank+self.local_size-1-self.local_rank
