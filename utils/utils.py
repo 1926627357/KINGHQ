@@ -79,11 +79,11 @@ class Utils:
             # the min and max world rank in that machine
             if self.world_rank==4:
 
-                local_min_rank=self.worker_rank-self.local_rank
-                local_max_rank=self.worker_rank+self.local_size-1-self.local_rank
+                local_min_rank=self.world_rank-self.local_rank
+                local_max_rank=self.world_rank+self.local_size-1-self.local_rank
                 print("local_min_rank: %d"%local_min_rank)
                 print("local_max_rank: %d"%local_max_rank)
-                
+
                 self.local_worker_size=0
                 self.local_worker_rank=0
                 for index in range(local_min_rank,local_max_rank+1):

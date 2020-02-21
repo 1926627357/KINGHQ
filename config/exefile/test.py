@@ -9,7 +9,6 @@ from KINGHQ.utils.utils import Utils
 comm = Utils()
 comm.init()
 
-print("local worker size: ",comm.get_local_worker_size)
 
 
 
