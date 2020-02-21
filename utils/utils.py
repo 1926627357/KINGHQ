@@ -67,7 +67,7 @@ class Utils:
             self.rank_role_map=response.value
             if self.world_rank==3:
                 print("END")
-                print("*"*30)
+                print("*"*50)
                 print(self.rank_role_map)
             self.worker_size=0
             self.worker_rank=0
@@ -82,9 +82,6 @@ class Utils:
 
                 local_min_rank=self.world_rank-self.local_rank
                 local_max_rank=self.world_rank+self.local_size-1-self.local_rank
-                print("local_min_rank: %d"%local_min_rank)
-                print("local_max_rank: %d"%local_max_rank)
-
                 self.local_worker_size=0
                 self.local_worker_rank=0
                 for index in range(local_min_rank,local_max_rank+1):
