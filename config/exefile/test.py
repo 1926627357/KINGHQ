@@ -8,10 +8,8 @@ from KINGHQ.utils.utils import Utils
 
 comm = Utils()
 comm.init()
-import os
-if comm.get_world_rank()==3:
-    print(os.environ)
 
+print("local worker size: ",comm.get_local_worker_size)
 
 
 

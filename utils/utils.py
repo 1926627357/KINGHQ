@@ -76,17 +76,22 @@ class Utils:
                     self.worker_size+=1
                     if rank==self.world_rank:
                         self.worker_rank=self.worker_size-1
+            # the min and max world rank in that machine
+            if self.world_rank==4:
 
-            local_min_rank=self.worker_rank-self.local_rank
-            local_max_rank=self.worker_rank+self.local_size-1-self.local_rank
-            self.local_worker_size=0
-            self.local_worker_rank=0
-            for index in range(local_min_rank,local_max_rank+1):
-                if self.rank_role_map[index] == "masterworker"\
-                    or self.rank_role_map[index] == "worker":
-                    self.local_worker_size+=1
-                    if index==self.local_rank:
-                        self.local_worker_rank = self.local_worker_size-1
+                local_min_rank=self.worker_rank-self.local_rank
+                local_max_rank=self.worker_rank+self.local_size-1-self.local_rank
+                print("local_min_rank: %d"%local_min_rank)
+                print("local_max_rank: %d"%local_max_rank)
+                
+                self.local_worker_size=0
+                self.local_worker_rank=0
+                for index in range(local_min_rank,local_max_rank+1):
+                    if self.rank_role_map[index] == "masterworker"\
+                        or self.rank_role_map[index] == "worker":
+                        self.local_worker_size+=1
+                        if index==self.local_rank:
+                            self.local_worker_rank = self.local_worker_size-1
             
                 
         
