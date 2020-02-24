@@ -15,9 +15,8 @@ class ReqMsg(object):
     def recv(self):
         # server can use this api to get a request!
         msg=torch.randn(3).to(dtype=torch.float)
-        src=dist.recv(tensor=msg,tag=self.comm_tag["reqres"])
-        dst=ctx.util.world_rank
-        self.src=src
+        self.src=dist.recv(tensor=msg,tag=self.comm_tag["reqres"])
+        self.dst=self.ctx.util.world_rank
         msg=msg.to(torch.int).tolist()
         if msg[0]==self.comm_code["pushreq"]:
             self.type="PushReqMsg"
