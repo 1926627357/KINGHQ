@@ -39,7 +39,7 @@ model=lenet.LeNet5()
 model.train()
 optimizer=torch.optim.SGD(model.parameters(), lr=0.002)
 
-check_point=torch.load('/home/v-haiqwa/Documents/KINGHQ/model_state/Lenet')
+check_point=torch.load('/home/v-haiqwa/Documents/KINGHQ/config/mod_optim/Lenet')
 model.load_state_dict(check_point['state_dict'])
 optimizer.load_state_dict(check_point['optimizer'])
 

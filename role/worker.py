@@ -71,8 +71,9 @@ class Worker(Role):
         def hook(mod,input):
             for p in mod.parameters():
                 self.paramkey_lock[self.param_key_map[p]].acquire()
-                value=self.key_res[self.param_key_map[p]].value
-                p.detach().zero_().add_(value)
+                if self.param_key_map[p] in self.key_res.keys():
+                    value=self.key_res[self.param_key_map[p]].value
+                    p.detach().zero_().add_(value)
                 self.paramkey_lock[self.param_key_map[p]].release()
         for submod in submodel:
             submod.register_forward_pre_hook(hook)
