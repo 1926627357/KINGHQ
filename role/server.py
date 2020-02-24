@@ -18,7 +18,8 @@ class Server(Role):
         self.Outbox=threading.Thread(target=self.loop_Outbox)
         
     def init(self):
-        
+        self.Inbox.start()
+        self.Outbox.start()
         self.param_rank_map=self.util.partition_model(self.optimizer)
         self.register_KVStore()
         self.my_param_keys=[]

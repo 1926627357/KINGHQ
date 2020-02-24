@@ -23,7 +23,7 @@ size=KINGHQ.size()
 # '~/Documents/pytorch_project/dataset/MNIST'
 
 train_dataset = \
-    datasets.MNIST('~/Documents/KINGHQ/datasets/MNIST'+'data-%d' % KINGHQ.rank(), train=True, download=True,
+    datasets.MNIST('~/Documents/.datasets/MNIST'+'data-%d' % KINGHQ.rank(), train=True, download=True,
                    transform=transforms.Compose([
                        transforms.ToTensor(),
                        transforms.Normalize((0.1307,), (0.3081,))

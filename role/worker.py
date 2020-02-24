@@ -17,7 +17,7 @@ class Worker(Role):
         self.core=Core()
     def init(self):
 
-
+        self.mailbox.start()
         self.param_rank_map=self.util.partition_model(self.optimizer)
         self.register_KVStore()
 
