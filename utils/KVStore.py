@@ -6,23 +6,34 @@ class KVStore(object):
     def __init__(self,min_key):
         self.KVStore_min_key=min_key
         self.KVStore={}
-        
         self.Hot_key={}
         #Hot_key_reverse={key:name}
         self.Hot_key_reverse={}
 
-    def register_new_key(self,value,name=None):
+    def register_new_key(self,value,name=None,key=None):
         #register in KVStore and VKStore
         #if usr provide the name, he can set a hot key for that key
-        self.KVStore[self.KVStore_min_key]=value
-        if name is not None:
-            self.Hot_key_reverse[self.KVStore_min_key]=name
-            if name in self.Hot_key:
-                self.Hot_key[name].append(self.KVStore_min_key)
-            else:
-                self.Hot_key[name]=[self.KVStore_min_key]
-        self.KVStore_min_key=self.KVStore_min_key+1
-        return self.KVStore_min_key-1
+        if key is None:
+            self.KVStore[self.KVStore_min_key]=value
+            if name is not None:
+                self.Hot_key_reverse[self.KVStore_min_key]=name
+                if name in self.Hot_key:
+                    self.Hot_key[name].append(self.KVStore_min_key)
+                else:
+                    self.Hot_key[name]=[self.KVStore_min_key]
+            self.KVStore_min_key=self.KVStore_min_key+1
+            return self.KVStore_min_key-1
+        else:
+            self.KVStore[key]=value
+        
+            if name is not None:
+                self.Hot_key_reverse[key]=name
+                if name in self.Hot_key:
+                    self.Hot_key[name].append(key)
+                else:
+                    self.Hot_key[name]=[key]
+            self.KVStore_min_key=max([self.KVStore_min_key, key])+1
+            return key
 
     def get_KVStore(self):
         # return the KVStore dictionary

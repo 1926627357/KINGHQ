@@ -1,228 +1,116 @@
 import torch.distributed as dist
 import torch
 from KINGHQ.role import Role
-
+import queue
+import threading
+from KINGHQ.core.core import Core
+from KINGHQ.msg.msg import PushReqMsg,PushResMsg,PullReqMsg,PullResMsg
 class Worker(Role):
-    def __init__(self, KVStore, matrix, optimizer, rank, strategy, device='cpu'):
-        super().__init__(KVStore,optimizer,device)
-        
-        self.matrix=matrix
-        # describe the synchronization strategy at the format of dictionary
-        self.strategy=strategy['worker']
+    def __init__(self, util, optimizer, model):
+        self.util=util
+        self.model=model
+        self.optimizer=optimizer
+        super().__init__(util.get_KVStore())
+        self.comm_queue=queue.Queue()
+        self.mailbox=threading.Thread(target=self.loop_)
+        self.key_res={}
+        self.core=Core()
+    def init(self):
 
 
-        # record iterations
-        self.iterations=torch.tensor([0.])
+        self.param_rank_map=self.util.partition_model(self.optimizer)
+        self.register_KVStore()
 
-        self.clock=torch.tensor([0.])
-        #information of distribution
-        self.rank=rank
+        self.paramkey_lock={key: threading.Lock() for _,key in self.param_key_map.items()}
 
-        #Accumulation for push
-        self.Accum_push={}
+        # register the backward and forward hook function
+        self.register_bhook()
+        self.register_fhook()
+        # if self.util.role=="masterworker":
+        #     print("PHASE 3 PARTITION THE MODEL")
+        #     rank_paramkey_map={i:[] for i in self.util.servers}
+        #     for param,rank in self.param_rank_map.items():
+        #         rank_paramkey_map[rank].append(self.param_key_map[param])
+        #     rank_handles_map={}
+        #     for rank,paramkey in rank_paramkey_map.items():
+        #         handle0=dist.isend(tensor=torch.tensor([len(paramkey)],dtype=torch.float),dst=rank,tag=0)
+        #         handle1=dist.isend(tensor=torch.tensor(paramkey,dtype=torch.float),dst=rank,tag=1)
+        #         rank_handles_map[rank]=[handle0,handle1]
+        #     for rank,handles in rank_paramkey_map.items():
+        #         for each in handles:
+        #             each.wait()
+        #         print("RANK: {} has recv the solution".format(rank))
+            
+        #     print("*"*50)
+        # self.util.barrier()
+
+    def b_hook(self, p):
+        def hook(* ignore):
+            # acquire the lock before send it
+            self.paramkey_lock[self.param_key_map[p]].acquire()
+            msg=PushReqMsg(key=self.param_key_map[p],value=p.grad,src=self.util.world_rank,dst=self.param_rank_map[p])
+            self.core.post(msg=msg,ctx=self)
+        return hook
+    def register_bhook(self):
+        # _requires_update = [] and
+        # _grad_accs = [] is used to fix the bug
+        self._requires_update = []
+        self._grad_accs = []
         for group in self.optimizer.param_groups:
             for p in group['params']:
-                self.Accum_push[p]=torch.zeros_like(p)
-                
+                if p.requires_grad:
+                    p.grad = p.data.new(p.size()).zero_()
+                    self._requires_update.append(p)
+                    p_tmp = p.expand_as(p)
+                    grad_acc = p_tmp.grad_fn.next_functions[0][0]
+                    grad_acc.register_hook(self.b_hook(p))
+                    self._grad_accs.append(grad_acc)
+    
+    def register_fhook(self):
+        submodel=self.util.get_submodel(self.model)
+        def hook(mod,input):
+            for p in mod.parameters():
+                self.paramkey_lock[self.param_key_map[p]].acquire()
+                value=self.key_res[self.param_key_map[p]].value
+                p.detach().zero_().add_(value)
+                self.paramkey_lock[self.param_key_map[p]].release()
+        for submod in submodel:
+            submod.register_forward_pre_hook(hook)
 
     def register_KVStore(self):
         # note that: here, we only register the key-value pairs that only worker
         # should know, while the server doesn't need to know that
         super().register_KVStore()
-        self.KVStore.register_new_key(value=self.clock,name='clock')
-        self.KVStore.register_new_key(value=self.iterations,name='iterations')
+        
+        self.param_key_map={}
+        # register the parameters
         for group in self.optimizer.param_groups:
             for p in group['params']:
-                self.KVStore.register_new_key(value=self.Accum_push[p],name='Accum_push')
+                key=self.KVStore.register_new_key(value=p,name="params")
+                self.param_key_map[p]=key
 
-    def get_sources(self):
-        sources=[]
-        for index,value in enumerate(self.matrix[self.rank]):
-            if value!=0 and index!=self.rank:
-                sources.append(index)
-        return sources
-
-    def get_destinations(self):
-        destinations=[]
-        for index,value in enumerate(self.matrix[self.rank]):
-            if value!=0 and index!=self.rank:
-                destinations.append(index)
-        return destinations
-
-    def pull(self,source_keys):
-        #source_key: a dictionary in a format of {source:keys}
-        #            means that worker would recv the data of 
-        #            key from the server
-        # I think the key should be seen at the point of server
-        # add pull(self,keys)
-        buffer={}
-        for source, keys in source_keys.items():
-            pull_request=torch.tensor([self.request_map['pull_request']],dtype=torch.float32)
-            pull_answer=torch.tensor([0.])
-            buffer[source]={}
-            dist.send(pull_request,dst=source,tag=self.Communication_Tag['request'])
-            dist.recv(pull_answer,src=source,tag=self.Communication_Tag['request'])
-            # add the answer from the server to the buffer
-            buffer[source]['pull_answer']=pull_answer
-            if pull_answer==self.response_map['no blocking']:
-                #no blocking
-                continue
-            elif pull_answer==self.response_map['send value'] or \
-                pull_answer==self.response_map['blocking']:
-
-                keys_list=list(self.KVStore(keys).keys())
-                
-                # tell the server with the length and content of keys
-                keys_len=torch.tensor([len(keys_list)],dtype=torch.float32)
-                keys_tensor=torch.tensor(keys_list,dtype=torch.float32)
-                dist.send(keys_len,dst=source,tag=self.Communication_Tag['pull_num'])
-                dist.send(keys_tensor,dst=source,tag=self.Communication_Tag['pull_key'])
-                for key,value in self.KVStore(keys).items():
-                    buffer[source][key] = torch.randn(value.size())
-                    dist.recv(buffer[source][key],src=source,tag=key)
-        return buffer
+    def loop_(self):
+        while True:
+            msg = self.comm_queue.get()
+            if msg is not None:
+                Res=msg.wait()
+                self.key_res[Res.key]=Res
+                self.paramkey_lock[Res.key].release()
+            else:
+                break
     
-    def handle_pull_request(self, buffer):
-        #the data pulled are all filled in the buffer
-        # modify ....
-        Hot_key_reverse=self.KVStore.get_Hot_key_reverse()
-
-        param_keys=self.KVStore.get_Hot_key()['params']
-        weight={param_key:self.matrix[self.rank][self.rank] for param_key in param_keys}
-
-        for source,recv in buffer.items():
-            pull_answer=recv['pull_answer']
-            if pull_answer==self.response_map['no blocking']:
-                continue
-            elif pull_answer==self.response_map['send value'] or \
-                pull_answer==self.response_map['blocking']:
-
-                for key,value in recv.items():
-                    if not isinstance(key,int):
-                        continue
-                    
-                    category=Hot_key_reverse[key]
-                    if category=='global_version':
-                        self.KVStore('version').popitem()[1].detach().zero_().add_(value)
-                    elif category=='clock_slow':
-                        self.KVStore(key).popitem()[1].detach().zero_().add_(value)
-                    elif category=='params':
-                        # I elaborately a weighted average algorithm here
-                        _,p=self.KVStore(key).popitem()
-                        base=weight[key]+self.matrix[self.rank][source]
-                        
-                        p.detach().zero_().add_(weight[key]*p/base\
-                                + self.matrix[self.rank][source]*value/base)
-                        
-                        weight[key] += self.matrix[self.rank][source]
-                        
-    def push(self, destination_src_keys, destination_dst_keys):
-        # destination_src_keys: {destination: keys}, send the values of the keys in the worker
-        #                       to the specified destination
-        #                       the keys is seen at the point of worker
-        #                       it can also be seen as a buffer
-        # destination_dst_keys: {destination: keys}, the key is seen at the point of worker
-        for destination,src_keys in destination_src_keys.items():
-            dst_keys=destination_dst_keys[destination]
-
-            push_request=torch.tensor([self.request_map['push_request']],dtype=torch.float32)
-            dist.send(push_request,dst=destination,tag=self.Communication_Tag['request'])
-
-            keys_list=list(self.KVStore(dst_keys).keys())
-            keys_len=torch.tensor([len(keys_list)],dtype=torch.float32)
-            keys_tensor=torch.tensor(keys_list,dtype=torch.float32)
-
-            dist.send(keys_len,dst=destination,tag=self.Communication_Tag['push_num'])
-            dist.send(keys_tensor,dst=destination,tag=self.Communication_Tag['push_key'])
-
-            # unify the src_keys and dst_keys into [int, int, int] format
-            src_keys=self.KVStore.handle_list(src_keys)
-            dst_keys=self.KVStore.handle_list(dst_keys)
-
-            for src_key,dst_key in zip(src_keys,dst_keys):
-                dist.send(self.KVStore(src_key).popitem()[1],dst=destination,tag=dst_key)
-
-    def pull_(self, keys):
-        # this api is used to pull the same keys from sources
-        # a simple and fast api
-        sources=self.get_sources()
-        source_keys={source:keys for source in sources}
-        self.handle_pull_request(self.pull(source_keys))
-    
-    def push_(self,src_keys,dst_keys):
-        # this api is used to push the same keys to all destinations
-        destinations=self.get_destinations()
-        destination_src_keys={destination:src_keys for destination in destinations}
-        destination_dst_keys={destination:dst_keys for destination in destinations}
-        self.push(destination_src_keys,destination_dst_keys)
-        
-
-
+    def shutdown(self):
+        self.comm_queue.put(None)
 
     def do_(self):
         # do jobs as the flow chart designs
         # push->apply->pull
-        self.iterations+=1
-        if self.strategy['push']['accumulate']['decision']:
-            self.accumulate(src_keys='grads',dst_keys='Accum_push')
-        if self.strategy['push']['action']['Interval']['decision']:
-            if self.iterations%self.strategy['push']['action']['Interval']['interval']==0:
-                if self.strategy['push']['action']['what']['solu1']['decision']:
-                    self.push_(["version","grads"],["version","grads"])
-                elif self.strategy['push']['action']['what']['solu2']['decision']:
-                    self.push_(["version","Accum_push"],["version","grads"])
-                    if self.strategy['push']['clear accumulate']['decision']:
-                        self.zero_data('Accum_push')
-                elif self.strategy['push']['action']['what']['solu3']['decision']:
-                    self.push_(["Accum_push"],["grads"])
-                    if self.strategy['push']['clear accumulate']['decision']:
-                        self.zero_data('Accum_push')
-                elif self.strategy['push']['action']['what']['solu4']['decision']:
-                    self.push_(["grads"],["grads"])
-                if self.strategy['push']['action']['update']['decision']:
-                    self.clock+=1
-        
-
-        if self.strategy['apply']['accumulate']['decision']:
-            self.accumulate(src_keys='grads',dst_keys='Accum_apply')
-        if self.strategy['apply']['action']['Interval']['decision']:
-            if self.iterations%self.strategy['apply']['action']['Interval']['interval']==0:
-                if self.strategy['apply']['action']['what']['Accum_apply']:
-                    self.replace(src_keys='Accum_apply', dst_keys='grads')
-                elif self.strategy['apply']['action']['what']['grads']:
-                    pass
-                if self.strategy['apply']['clear accumulate']['decision']:
-                    self.zero_data('Accum_apply')
-                self.optimizer.step()
-                if self.strategy['apply']['action']['update']['decision']:
-                    self.update(self.strategy['apply']['action']['update']['content'])
-        
-        
-        if self.strategy['pull']['when']['Interval']['decision']:
-            if self.iterations%self.strategy['pull']['when']['Interval']['interval']==0:
-                if self.strategy['pull']['what']['solu1']['decision']:
-                    self.pull_(["params","clock_slow","global_version"])
-                elif self.strategy['pull']['what']['solu2']['decision']:
-                    self.pull_(["params","clock_slow"])
-                    
-                elif self.strategy['pull']['what']['solu3']['decision']:
-                    self.pull_(["params","global_version"])
-                elif self.strategy['pull']['what']['solu4']['decision']:
-                    self.pull_(["params"])
-        elif self.strategy['pull']['when']['staleness']['decision']:
-            if self.clock-self.clock_slow\
-                >self.strategy['pull']['when']['staleness']['staleness']:
-                if self.strategy['pull']['what']['solu1']['decision']:
-                    self.pull_(["params","clock_slow","global_version"])
-                elif self.strategy['pull']['what']['solu2']['decision']:
-                    self.pull_(["params","clock_slow"])
-                    
-                elif self.strategy['pull']['what']['solu3']['decision']:
-                    self.pull_(["params","global_version"])
-                elif self.strategy['pull']['what']['solu4']['decision']:
-                    self.pull_(["params"])
-        if self.strategy['barrier']['decision']:
-            dist.barrier()
+        self.clock+=1
+        for group in self.optimizer.param_groups:
+            for p in group['params']:
+                self.paramkey_lock[self.param_key_map[p]].acquire()
+                req=PullReqMsg(key=self.param_key_map[p],version=0,src=self.util.world_rank,dst=self.param_rank_map[p],ctx=self)
+                self.core.post(msg=req,ctx=self)
 
 if __name__ == "__main__":
     pass

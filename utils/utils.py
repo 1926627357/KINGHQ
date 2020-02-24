@@ -15,22 +15,18 @@ import torch
 import json5
 import os
 import fcntl
-
+import queue
 # import sys
 class Utils:
     def __init__(self):
-        self.Communication_Tag={'request':0,'push_num':1,'push_key':2,'pull_num':3,'pull_key':4}
-        self.response_map={'send value':0, 'blocking':1, 'no blocking':2}
-        self.request_map={'pull_request':0, 'push_request':1}
-        self.KVStore_min_key=len(self.Communication_Tag)
-        self.KVStore=KVStore(self.KVStore_min_key)
-        #register the communication tag firstly
-        self.KVStore.register_new_key(self.Communication_Tag,name='Communication_Tag')
-        self.KVStore.register_new_key(self.response_map,name='response_map')
-        self.KVStore.register_new_key(self.request_map,name='request_map')
+        self.KVStore=KVStore(0)
         self.strategy=None
 
         self.role_path="/home/v-haiqwa/Documents/KINGHQ/config/recv/"
+        # record the workers, servers, masters' ranks in a format of list
+        self.workers=[]
+        self.servers=[]
+        self.master=[]
 
     def init(self):
         dist.init_process_group(backend='mpi')
@@ -44,6 +40,8 @@ class Utils:
             self.local_rank=0
             self.local_worker_size=1
             self.local_worker_rank=0
+            self.workers=[0]
+            self.master_worker=0
         else:
             # multi-machine
             # note that the environment var is in a format of string
@@ -56,8 +54,9 @@ class Utils:
                     line=lines.pop(0)
                     f.seek(0)
                     f.writelines(lines)
+            # get the role from the file
             self.role = line.replace('\n','')
-            # print("I'm rank-{} and I'am the {}".format(self.rank,self.role))
+            
             if self.world_rank==0:
                 print("PHASE 2 GLOBALLY EXCHANGE INFORMATION")
             request=RoExReqMsg(value=self.role)
@@ -65,17 +64,26 @@ class Utils:
             response=request.wait()
             # e.g. {0: "master", 1:"server"}
             self.rank_role_map=response.value
-            if self.world_rank==3:
+            if self.world_rank==0:
                 print("END")
                 print("*"*50)
                 print(self.rank_role_map)
+            # count workers num
             self.worker_size=0
             self.worker_rank=0
             for rank,role in self.rank_role_map.items():
                 if role=="masterworker" or role=="worker":
+                    if role=="masterworker":
+                        # master_worker record the rank of the master worker
+                        self.master_worker=rank
+                    self.workers.append(rank)
                     self.worker_size+=1
                     if rank==self.world_rank:
                         self.worker_rank=self.worker_size-1
+                elif role=="server":
+                    self.servers.append(rank)
+                else:
+                    self.master.append(rank)
             # the min and max world rank in that machine
             # if self.world_rank==4:
             if True:
@@ -89,11 +97,30 @@ class Utils:
                         or self.rank_role_map[index] == "worker":
                         self.local_worker_size+=1
                         if index==self.local_rank:
-                            self.local_worker_rank = self.local_worker_size-1
-            
-                
+                            self.local_worker_rank = self.local_worker_size-1    
+    def partition_model(self,optimizer):
+        param_size = dict()
+
+        for group in optimizer.param_groups:
+            for p in group['params']:
+                size=1
+                for each in p.data.size():
+                    size*=each
+                param_size[p]=size
+        import operator
+        # sort the dict according to the value
+        param_size = dict(sorted(param_size.items(), key=operator.itemgetter(1), reverse=True))
+
+        # {p1: server1, ...}
+        param_server_rank=dict()
+        server_size=[0 for _ in range(len(self.servers))]
         
-    
+        # greedy search
+        for param, size in param_size.items():
+            index=min(range(len(server_size)), key=server_size.__getitem__)
+            param_server_rank[param]=self.servers[index]
+            server_size[index]+=size
+        return param_server_rank
 
     def load_strategy(self, path):
         # load the strategy through the json file
@@ -102,13 +129,34 @@ class Utils:
         return self.strategy
         
     def barrier(self):
-        dist.barrier()
+        # only barrier all the workers!
+        group = dist.new_group(self.workers)
+        dist.barrier(group=group)
+
+    def broadcast_model(self,model):
+        # broadcast the model to all the node
+        for p in model.parameters():
+            dist.broadcast(p,src=self.master_worker)
+    def shut_down(self):
+        dist.destroy_process_group()
 
     def get_KVStore(self):
         return self.KVStore
 
-    def get_role_rank_map(self):
-        pass
+    def get_submodel(self,model):
+        q = queue.LifoQueue()
+        submodule=[]
+        for mod in model.children():
+            q.put(mod)
+        while not q.empty():
+            mod = q.get()
+            if len(list(mod.children())) == 0:
+                submodule.append(mod)
+            else:
+                for m in mod.children():
+                    q.put(m)
+        return submodule
+    
 
     def is_masterworker(self):
         # Determine if a node is the masterworker
@@ -118,6 +166,8 @@ class Utils:
             return False
 
     # here are normal apis here
+    def get_master_rank(self):
+        return self.master[0]
     def get_world_rank(self):
         return self.world_rank
     def get_world_size(self):

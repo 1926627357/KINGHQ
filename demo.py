@@ -45,7 +45,7 @@ optimizer.load_state_dict(check_point['optimizer'])
 
 
 loss_function = nn.CrossEntropyLoss()
-optimizer=KINGHQ.KINGHQ_Optimizer(optimizer)
+optimizer=KINGHQ.KINGHQ_Optimizer(optimizer,model)
 
 
 import time
