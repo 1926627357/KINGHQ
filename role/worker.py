@@ -16,9 +16,11 @@ class Worker(Role):
         self.key_res={}
         self.core=Core()
     def init(self):
-
+        
         self.mailbox.start()
+        
         self.param_rank_map=self.util.partition_model(self.optimizer)
+        # print(self.param_rank_map)
         self.register_KVStore()
 
         self.paramkey_lock={key: threading.Lock() for _,key in self.param_key_map.items()}
@@ -26,30 +28,19 @@ class Worker(Role):
         # register the backward and forward hook function
         self.register_bhook()
         self.register_fhook()
-        # if self.util.role=="masterworker":
-        #     print("PHASE 3 PARTITION THE MODEL")
-        #     rank_paramkey_map={i:[] for i in self.util.servers}
-        #     for param,rank in self.param_rank_map.items():
-        #         rank_paramkey_map[rank].append(self.param_key_map[param])
-        #     rank_handles_map={}
-        #     for rank,paramkey in rank_paramkey_map.items():
-        #         handle0=dist.isend(tensor=torch.tensor([len(paramkey)],dtype=torch.float),dst=rank,tag=0)
-        #         handle1=dist.isend(tensor=torch.tensor(paramkey,dtype=torch.float),dst=rank,tag=1)
-        #         rank_handles_map[rank]=[handle0,handle1]
-        #     for rank,handles in rank_paramkey_map.items():
-        #         for each in handles:
-        #             each.wait()
-        #         print("RANK: {} has recv the solution".format(rank))
-            
-        #     print("*"*50)
-        # self.util.barrier()
+
 
     def b_hook(self, p):
         def hook(* ignore):
             # acquire the lock before send it
+            
             self.paramkey_lock[self.param_key_map[p]].acquire()
-            msg=PushReqMsg(key=self.param_key_map[p],value=p.grad,src=self.util.world_rank,dst=self.param_rank_map[p])
+            
+            msg=PushReqMsg(key=self.param_key_map[p],value=p.grad,src=self.util.world_rank,dst=self.param_rank_map[p],ctx=self)
+            # print(self.param_key_map[p])
+            # print(self.util.world_rank)
             self.core.post(msg=msg,ctx=self)
+            
         return hook
     def register_bhook(self):
         # _requires_update = [] and
@@ -69,11 +60,13 @@ class Worker(Role):
     def register_fhook(self):
         submodel=self.util.get_submodel(self.model)
         def hook(mod,input):
+            
             for p in mod.parameters():
                 self.paramkey_lock[self.param_key_map[p]].acquire()
                 if self.param_key_map[p] in self.key_res.keys():
                     value=self.key_res[self.param_key_map[p]].value
                     p.detach().zero_().add_(value)
+                    # print("worker: I'm in the forward-key:{}".format(self.param_key_map[p]))
                 self.paramkey_lock[self.param_key_map[p]].release()
         for submod in submodel:
             submod.register_forward_pre_hook(hook)
@@ -89,14 +82,28 @@ class Worker(Role):
             for p in group['params']:
                 key=self.KVStore.register_new_key(value=p,name="params")
                 self.param_key_map[p]=key
+        
 
     def loop_(self):
         while True:
             msg = self.comm_queue.get()
             if msg is not None:
-                Res=msg.wait()
-                self.key_res[Res.key]=Res
-                self.paramkey_lock[Res.key].release()
+                if msg.status=="prepare":
+                    
+                    msg.send()
+                    self.comm_queue.put(msg)
+                elif msg.status=="send":
+                    
+                    if msg.is_completed():
+                        # this msg has been completed
+                        
+                        Res=msg.get_response()
+                        self.key_res[Res.key]=Res
+                        self.paramkey_lock[Res.key].release()
+                    else:
+                        # if msg.key==12 and msg.type=="PullReqMsg":
+                        #     print("Not Completed")
+                        self.comm_queue.put(msg)
             else:
                 break
     
@@ -107,11 +114,15 @@ class Worker(Role):
         # do jobs as the flow chart designs
         # push->apply->pull
         self.clock+=1
+        # print("begin to pull")
         for group in self.optimizer.param_groups:
             for p in group['params']:
                 self.paramkey_lock[self.param_key_map[p]].acquire()
+                # print("send pull req")
+                
                 req=PullReqMsg(key=self.param_key_map[p],version=0,src=self.util.world_rank,dst=self.param_rank_map[p],ctx=self)
                 self.core.post(msg=req,ctx=self)
+        
 
 if __name__ == "__main__":
     pass

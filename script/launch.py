@@ -123,5 +123,5 @@ MPI_COMMAND=MPI_COMMAND[:-1]
 
 MPI_COMMAND+=" /home/v-haiqwa/anaconda3/envs/pytorch/bin/python -B "+"/home/v-haiqwa/Documents/KINGHQ/config/exefile/"+args.input.split('/')[-1]
 
-
-print(excuteCommand(MPI_COMMAND))
+print(MPI_COMMAND)
+# print(excuteCommand(MPI_COMMAND))

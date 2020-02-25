@@ -1,3 +1,4 @@
+# print("HHHHHHHHHHHHHHHHHHHHHHHHH")
 import sys
 sys.path.append('/home/v-haiqwa/Documents/')
 import KINGHQ
@@ -10,17 +11,20 @@ import torchvision
 from torchvision import datasets
 import torchvision.transforms as transforms
 
-# it's just a demo for me to fix some bugs
-# 
+# # it's just a demo for me to fix some bugs
+# # 
+
 
 KINGHQ.init()
-
-# In fact the rank is the worker rank
-# the size is the worker size
+CUDA=True
+device = torch.device('cuda:{}'.format(KINGHQ.local_rank()) if CUDA else 'cpu')
+kwargs = {'num_workers': 1, 'pin_memory': True} if CUDA else {}
+# # In fact the rank is the worker rank
+# # the size is the worker size
 rank=KINGHQ.rank()
 size=KINGHQ.size()
-
-# '~/Documents/pytorch_project/dataset/MNIST'
+# print(rank)
+# # '~/Documents/pytorch_project/dataset/MNIST'
 
 train_dataset = \
     datasets.MNIST('~/Documents/.datasets/MNIST'+'data-%d' % KINGHQ.rank(), train=True, download=True,
@@ -29,14 +33,16 @@ train_dataset = \
                        transforms.Normalize((0.1307,), (0.3081,))
                    ]))
 
-# Horovod: use DistributedSampler to partition the training data.
+# # Horovod: use DistributedSampler to partition the training data.
 train_sampler = torch.utils.data.distributed.DistributedSampler(
     train_dataset, num_replicas=KINGHQ.size(), rank=KINGHQ.rank(), shuffle=True)
 train_loader = torch.utils.data.DataLoader(
-    train_dataset, batch_size=16, sampler=train_sampler)
+    train_dataset, batch_size=16, sampler=train_sampler, **kwargs)
 
-model=lenet.LeNet5()
-model.train()
+
+
+model=lenet.LeNet5().to(device)
+# model.train()
 optimizer=torch.optim.SGD(model.parameters(), lr=0.002)
 
 check_point=torch.load('/home/v-haiqwa/Documents/KINGHQ/config/mod_optim/Lenet')
@@ -46,7 +52,7 @@ optimizer.load_state_dict(check_point['optimizer'])
 
 loss_function = nn.CrossEntropyLoss()
 optimizer=KINGHQ.KINGHQ_Optimizer(optimizer,model)
-
+# print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH")
 
 import time
 
@@ -61,6 +67,8 @@ iteration=0
 for epoch in range(10):
     train_sampler.set_epoch(epoch)
     for batch_idx, (data, target) in enumerate(train_loader):
+        if CUDA:
+            data, target = data.to(device), target.to(device)
         iteration+=1
 
         optimizer.zero_grad()
@@ -73,8 +81,9 @@ for epoch in range(10):
             predict=torch.argmax(output, dim=1)
             accuracy=float(torch.sum(predict == target))/data.size(0)
             log.log([iteration/1, time.time(), accuracy])
-            
+        
         loss.backward()
+        
         # time.sleep(5)
         # if rank==0:
         #     print("computing:%d"%(time.time()-start_time))
@@ -88,6 +97,7 @@ for epoch in range(10):
             #         p.grad/=4
         
         # time.sleep(0.005*Dice()-0.002)
+        
         optimizer.step()
         
         

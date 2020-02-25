@@ -15,19 +15,19 @@ import torchvision.transforms as transforms
 # # 
 
 
-KINGHQ.init()
+# KINGHQ.init()
 CUDA=True
-device = torch.device('cuda:{}'.format(KINGHQ.local_rank()) if CUDA else 'cpu')
+device = torch.device('cuda:{}'.format(0) if CUDA else 'cpu')
 kwargs = {'num_workers': 1, 'pin_memory': True} if CUDA else {}
 # # In fact the rank is the worker rank
 # # the size is the worker size
-rank=KINGHQ.rank()
-size=KINGHQ.size()
+# rank=KINGHQ.rank()
+# size=KINGHQ.size()
 # print(rank)
 # # '~/Documents/pytorch_project/dataset/MNIST'
 
 train_dataset = \
-    datasets.MNIST('~/Documents/.datasets/MNIST'+'data-%d' % KINGHQ.rank(), train=True, download=True,
+    datasets.MNIST('~/Documents/.datasets/MNIST'+'data-%d' % 0, train=True, download=True,
                    transform=transforms.Compose([
                        transforms.ToTensor(),
                        transforms.Normalize((0.1307,), (0.3081,))
@@ -35,7 +35,7 @@ train_dataset = \
 
 # # Horovod: use DistributedSampler to partition the training data.
 train_sampler = torch.utils.data.distributed.DistributedSampler(
-    train_dataset, num_replicas=KINGHQ.size(), rank=KINGHQ.rank(), shuffle=True)
+    train_dataset, num_replicas=1, rank=0, shuffle=True)
 train_loader = torch.utils.data.DataLoader(
     train_dataset, batch_size=16, sampler=train_sampler, **kwargs)
 
@@ -51,11 +51,11 @@ optimizer.load_state_dict(check_point['optimizer'])
 
 
 loss_function = nn.CrossEntropyLoss()
-optimizer=KINGHQ.KINGHQ_Optimizer(optimizer,model)
+# optimizer=KINGHQ.KINGHQ_Optimizer(optimizer,model)
 # print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH")
 
 import time
-
+rank=0
 if rank==0:
     bar=Bar(total=len(train_loader)*10, description=' worker progress')
     log=Log(title='Single machine',\
@@ -108,10 +108,10 @@ for epoch in range(10):
         if rank==0:
             bar()
 
-if rank==0:
-    log.data_processing('interval', data=log.get_column_data('time'))
-    log.data_processing('rolling_mean',data=log.get_column_data('accuracy'),cycle=12)
-    log.write()
+# if rank==0:
+#     log.data_processing('interval', data=log.get_column_data('time'))
+#     log.data_processing('rolling_mean',data=log.get_column_data('accuracy'),cycle=12)
+#     log.write()
 
 
 

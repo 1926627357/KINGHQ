@@ -54,29 +54,61 @@ class Server(Role):
     
     def loop_Inbox(self):
         # to recv the request from all workers or masters
+        ReqMsg_queue=queue.Queue()
+        for rank in self.util.workers:
+            ReqMsg_queue.put(ReqMsg(src=rank,dst=self.util.world_rank,ctx=self))
+        for rank in self.util.master:
+            ReqMsg_queue.put(ReqMsg(src=rank,dst=self.util.world_rank,ctx=self))
+        
         while True:
-            msg=ReqMsg()
-            msg.recv()
-            self.request_queue.put(msg)
+            # msg=ReqMsg(ctx=self)
+            # msg.recv()
+            # self.request_queue.put(msg)
+            msg=ReqMsg_queue.get()
+            if msg.status=="init":
+                msg.recv_head()
+            else:
+                if msg.is_completed():
+                    if msg.status=="recv_head":
+                        msg.recv_value()
+                        
+                    elif msg.status=="recv_value":
+                        self.request_queue.put(msg)
+                        msg=ReqMsg(src=msg.src,dst=self.util.world_rank,ctx=self)
+            ReqMsg_queue.put(msg)
+
+                
 
     def loop_Outbox(self):
         # to send the tensor to the specific workers
         while True:
             Res=self.response_queue.get()
-            Res.send()
+            if Res.status=="init":
+                Res.send()
+                self.response_queue.put(Res)
+            elif Res.status=="send":
+                if Res.is_completed():
+                    pass
+                else:
+                    self.response_queue.put(Res)
+
 
     def do_(self):
         while True:
             Req=self.get_request()
+            # print(Req.type)
             if Req.type=="PushReqMsg":
-                Res=ResMsg(msgtype="PushResMsg")
-                self.response_queue.put(Res)
+            
+                # Res=ResMsg(msgtype="PushResMsg")
+                # self.response_queue.put(Res)
                 self.KVStore(Req.key)[Req.key].grad=Req.value
                 self.optimizer.step()
                 self.KVStore(Req.key)[Req.key].grad=None
             elif Req.type=="PullReqMsg":
+                
                 value=self.KVStore(Req.key)[Req.key].detach().clone()
                 Res=ResMsg(msgtype="PullResMsg",key=Req.key,value=value,src=Req.dst,dst=Req.src)
+                
                 self.response_queue.put(Res)
                 
             

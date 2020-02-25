@@ -65,9 +65,10 @@ class Utils:
             # e.g. {0: "master", 1:"server"}
             self.rank_role_map=response.value
             if self.world_rank==0:
+                print(self.rank_role_map)
                 print("END")
                 print("*"*50)
-                print(self.rank_role_map)
+                
             # count workers num
             self.worker_size=0
             self.worker_rank=0

@@ -12,25 +12,42 @@ class ReqMsg(object):
         self.ctx=ctx
         self.comm_tag={"reqres":0}
         self.comm_code={"pushreq":0,"pullreq":1}
-    def recv(self):
-        # server can use this api to get a request!
-        msg=torch.randn(3).to(dtype=torch.float)
-        self.src=dist.recv(tensor=msg,tag=self.comm_tag["reqres"])
-        self.dst=self.ctx.util.world_rank
-        msg=msg.to(torch.int).tolist()
-        if msg[0]==self.comm_code["pushreq"]:
+        self.status="init"
+    def recv_head(self):
+        self.status="recv_head"
+        self.handles=[]
+        self.msg=torch.randn(3).to(dtype=torch.float)
+        handle1=dist.irecv(tensor=self.msg,src=self.src,tag=self.comm_tag["reqres"])
+        self.handles.append(handle1)
+    def recv_value(self):
+        self.status="recv_value"
+        self.handles=[]
+        self.msg=self.msg.to(torch.int).tolist()
+        if self.msg[0]==self.comm_code["pushreq"]:
             self.type="PushReqMsg"
-            self.key=msg[1]
+            self.key=self.msg[1]
+            
+            # print("server: I get a push request-key:{}".format(self.key))
             p=self.ctx.KVStore(self.key)[self.key]
             self.value = p.data.new(p.size())
-            dist.recv(tensor=self.value,src=self.src,tag=msg[2])
-        elif msg[0]==self.comm_code["pullreq"]:
+            handle1 = dist.irecv(tensor=self.value,src=self.src,tag=self.msg[2])
+        elif self.msg[0]==self.comm_code["pullreq"]:
             self.type="PullReqMsg"
-            self.key=msg[1]
+            self.key=self.msg[1]
+            # print("server: I get a pull request-key:{}".format(self.key))
             self.value = torch.tensor([0],dtype=torch.float)
-            dist.recv(tensor=self.value,src=self.src,tag=msg[2])
-            self.value=self.value.to(dtype=torch.int).tolist()[0]
+            handle1 = dist.irecv(tensor=self.value,src=self.src,tag=self.msg[2])
+        self.handles.append(handle1)
+        
+        # self.value=self.value.to(dtype=torch.int).tolist()[0]
+    def is_completed(self):
+        result=True
+        for each in self.handles:
+            result=result and each.is_completed()
+        return result
 
+    
+        
         
 
 class ResMsg(object):
@@ -43,22 +60,29 @@ class ResMsg(object):
         self.src=src
         self.dst=dst
         self.comm_tag={"reqres":0}
+        self.status="init"
     
     def send(self):
-        if self.value is None:
-            pass
-        else:
-            bias=len(self.comm_tag)
-            self.send_value=self.value
-            dist.send(tensor=self.send_value,dst=self.dst,tag=self.key+bias)
+        self.status="send"
+        self.handles=[]
+        bias=len(self.comm_tag)
+        self.send_value=self.value
+        # print("server: I send a param-key:{} and size:{}".format(self.key,self.send_value.size()))
+        handle1=dist.isend(tensor=self.send_value,dst=self.dst,tag=self.key+bias)
+        self.handles.append(handle1)
 
-
-
+    def is_completed(self):
+        result=True
+        for each in self.handles:
+            result=result and each.is_completed()
+        return result
+            
 
 class RoExReqMsg(ReqMsg):
     def __init__(self, key=None, value=None):
         self.msgtype="RoExReqMsg"
-        super().__init__(self.msgtype, key, value)
+        
+        super().__init__(msgtype=self.msgtype, key=key, value=value)
         self.role_map={
             'masterworker':0,
             'worker':1,
@@ -86,7 +110,8 @@ class RoExReqMsg(ReqMsg):
 class RoExResMsg(ResMsg):
     def __init__(self, key=None, value=None):
         self.msgtype="RoExResMsg"
-        super().__init__(self.msgtype, key, value)
+        
+        super().__init__(msgtype=self.msgtype, key=key, value=value)
         self.role_map={
             0:'masterworker',
             1:'worker',
@@ -100,10 +125,10 @@ class RoExResMsg(ResMsg):
             tmp[each[0]]=self.role_map[each[1]]
         self.value=tmp
 
-
 class PushReqMsg(ReqMsg):
     def __init__(self,key,value,src,dst,ctx):
-        super().__init__("PushReqMsg", key,value,src,dst,ctx)
+        
+        super().__init__(msgtype="PushReqMsg", key=key,value=value,src=src,dst=dst,ctx=ctx)
         self.status="init"
     def encode(self):
         self.status="prepare"
@@ -119,49 +144,70 @@ class PushReqMsg(ReqMsg):
 
         self.handles.append(handle1)
         self.handles.append(handle2)
-    def wait(self):
-        for each in self.handles:
-            each.wait()
+    def get_response(self):
+        # print("worker: I have sent a push request-key:{}".format(self.key))
         response = PushResMsg(key=self.key,src=self.dst,dst=self.src)
         response.status="ACK"
         return response
+    def is_completed(self):
+        result=True
+        for each in self.handles:
+            result=result and each.is_completed()
+        # print(result)
+        return result
+
 class PushResMsg(ResMsg):
     def __init__(self,key,src,dst):
-        super().__init__("PushResMsg", key,src,dst)
+        
+        super().__init__(msgtype="PushResMsg", key=key,src=src,dst=dst)
         self.status=""
-
 
 class PullReqMsg(ReqMsg):
     def __init__(self,key,version,src,dst,ctx):
         # value is the version
-        super().__init__("PullReqMsg", key,src,dst,ctx)
+        
+        super().__init__(msgtype="PullReqMsg", key=key,src=src,dst=dst,ctx=ctx)
         self.version=version
         self.status="init"
+        
     def encode(self):
         self.status="prepare"
         self.send_value=torch.tensor([self.version],dtype=torch.float)
+        
     def send(self):
         self.status="send"
         self.handles=[]
         bias=len(self.comm_tag)
+        
         # send [1, key]
+        
         handle1=dist.isend(tensor=torch.tensor([self.comm_code["pullreq"], self.key, self.key+bias],dtype=torch.float),\
-                            dst=self.dst,tag=self.comm_tag["pullreqres"])
+                            dst=self.dst,tag=self.comm_tag["reqres"])
+        
         handle2=dist.isend(tensor=self.send_value,dst=self.dst,tag=self.key+bias)
+        
+        self.buffer=torch.randn(self.ctx.KVStore(self.key)[self.key].size())
+        # print("worker: I begin to recv a param-key:{}".format(self.key))
+        handle3=dist.irecv(tensor=self.buffer,src=self.dst,tag=self.key+bias)
+
         self.handles.append(handle1)
         self.handles.append(handle2)
-    def wait(self):
-        for each in self.handles:
-            each.wait()
-        buffer=torch.randn(self.ctx.KVStore(self.key)[self.key].size())
-        bias=len(self.comm_tag)
-        dist.recv(tensor=buffer,src=self.dst,tag=self.key+bias)
+        self.handles.append(handle3)
+        
+    def get_response(self):
         # put the recv value to the GPU
-        buffer=buffer.to(self.ctx.KVStore(self.key)[self.key].device)
-        response = PullResMsg(key=self.key, value=buffer,src=self.dst,dst=self.src)
+        # print("worker: I have recv a param-key:{} and size:{}".format(self.key,self.buffer.size()))
+        self.buffer=self.buffer.to(self.ctx.KVStore(self.key)[self.key].device)
+        response = PullResMsg(key=self.key, value=self.buffer,src=self.dst,dst=self.src)
         return response
+    def is_completed(self):
+        result=True
+        for each in self.handles:
+            result=result and each.is_completed()
+        return result
 
 class PullResMsg(ResMsg):
     def __init__(self,key,value,src,dst):
-        super().__init__("PullResMsg", key,value,src,dst)
+        
+        super().__init__(msgtype="PullResMsg", key=key,value=value,src=src,dst=dst)
         self.status=""

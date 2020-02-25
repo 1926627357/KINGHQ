@@ -4,5 +4,5 @@ class Core(object):
         pass
     def post(self,msg,ctx):
         msg.encode()
-        msg.send()
+        
         ctx.comm_queue.put(msg)
