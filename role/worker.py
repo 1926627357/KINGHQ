@@ -6,7 +6,8 @@ import threading
 from KINGHQ.core.core import Core
 from KINGHQ.msg.msg import PushReqMsg,PushResMsg,PullReqMsg,PullResMsg
 class Worker(Role):
-    def __init__(self, util, optimizer, model):
+    def __init__(self, util, optimizer, model, strategy):
+        self.strategy= strategy
         self.util=util
         self.model=model
         self.optimizer=optimizer

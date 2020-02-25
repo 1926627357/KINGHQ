@@ -5,13 +5,13 @@ import threading
 import queue
 from KINGHQ.msg.msg import ReqMsg,ResMsg
 class Server(Role):
-    def __init__(self, util, optimizer):
+    def __init__(self, util, optimizer, strategy):
         # worker_rank: denote all workers' ranks in a format of list
         super().__init__(util.get_KVStore())
-        
+        self.strategy=strategy
         self.optimizer=optimizer
         self.util=util
-        self.clock_vector=[0 for _ in range(len(util.workers))]
+        
         self.request_queue=queue.Queue()
         self.response_queue=queue.Queue()
         self.Inbox=threading.Thread(target=self.loop_Inbox)
@@ -30,7 +30,9 @@ class Server(Role):
         for param, _ in self.param_key_map.items():
             param.grad=None
         self.paramkey_lock={key: threading.Lock() for key in self.my_param_keys}
-
+        self.clock_vector={key:{rank:0 for rank in self.util.workers} for key in self.my_param_keys}
+        if self.strategy['consistency']=="BSP":
+            self.buffer={key:None for key in self.my_param_keys}
 
     def register_KVStore(self):
         super().register_KVStore()
@@ -40,8 +42,6 @@ class Server(Role):
             for p in group['params']:
                 key=self.KVStore.register_new_key(value=p,name="params")
                 self.param_key_map[p]=key
-
-
 
     def get_request(self):
         # option: 
@@ -77,8 +77,6 @@ class Server(Role):
                         msg=ReqMsg(src=msg.src,dst=self.util.world_rank,ctx=self)
             ReqMsg_queue.put(msg)
 
-                
-
     def loop_Outbox(self):
         # to send the tensor to the specific workers
         while True:
@@ -92,28 +90,68 @@ class Server(Role):
                 else:
                     self.response_queue.put(Res)
 
+    def aggregate(self,req,op=None):
+        if self.strategy['consistency']=="ASP":
+            pass
+        elif self.strategy['consistency']=="BSP":
+            if op is None or op=="SUM":
+                if self.buffer[req.key] is None:
+                    self.buffer[req.key]=req.value
+                else:
+                    self.buffer[req.key].add_(req.value)
+            elif op=="Average":
+                if self.buffer[req.key] is None:
+                    self.buffer[req.key]=req.value/len(self.util.workers)
+                else:
+                    self.buffer[req.key].add_(req.value/len(self.util.workers))
+        elif self.strategy['consistency']=="SSP":
+            pass
 
+    def apply(self,req):
+        if self.strategy['consistency']=="ASP":
+            self.KVStore(req.key)[req.key].grad=req.value
+            self.optimizer.step()
+            self.KVStore(req.key)[req.key].grad=None
+        elif self.strategy['consistency']=="BSP":
+            if max(self.clock_vector[req.key])==min(self.clock_vector[req.key]):
+                # apply when the server aggregate all the gradients from workers
+                self.KVStore(req.key)[req.key].grad=self.buffer[req.key]
+                self.optimizer.step()
+                self.buffer[req.key]=None
+                self.KVStore(req.key)[req.key].grad=None
+        elif self.strategy['consistency']=="SSP":
+            pass
+    def check(self,req):
+        if self.strategy['consistency']=="ASP":
+            return True
+        elif self.strategy['consistency']=="BSP":
+            if self.clock_vector[req.key][req.src]==min(self.clock_vector[req.key]):
+                # when the requester run no more 0 step than the slowest one
+                return True
+            else:
+                return False
+                
+        elif self.strategy['consistency']=="SSP":
+            pass
     def do_(self):
         while True:
             Req=self.get_request()
             # print(Req.type)
             if Req.type=="PushReqMsg":
-            
                 # Res=ResMsg(msgtype="PushResMsg")
                 # self.response_queue.put(Res)
-                self.KVStore(Req.key)[Req.key].grad=Req.value
-                self.optimizer.step()
-                self.KVStore(Req.key)[Req.key].grad=None
+                self.clock_vector[Req.key][Req.src]+=1
+                self.aggregate(req=Req)
+                self.apply(req=Req)
+                
             elif Req.type=="PullReqMsg":
                 
-                value=self.KVStore(Req.key)[Req.key].detach().clone()
-                Res=ResMsg(msgtype="PullResMsg",key=Req.key,value=value,src=Req.dst,dst=Req.src)
-                
-                self.response_queue.put(Res)
-                
-            
-        
-
+                if self.check(Req):
+                    value=self.KVStore(Req.key)[Req.key].detach().clone()
+                    Res=ResMsg(msgtype="PullResMsg",key=Req.key,value=value,src=Req.dst,dst=Req.src)
+                    self.response_queue.put(Res)
+                else:
+                    self.request_queue.put(Req)
 
 if __name__ == "__main__":
     pass

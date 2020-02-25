@@ -37,7 +37,7 @@ train_dataset = \
 train_sampler = torch.utils.data.distributed.DistributedSampler(
     train_dataset, num_replicas=KINGHQ.size(), rank=KINGHQ.rank(), shuffle=True)
 train_loader = torch.utils.data.DataLoader(
-    train_dataset, batch_size=16, sampler=train_sampler, **kwargs)
+    train_dataset, batch_size=128, sampler=train_sampler, **kwargs)
 
 
 
@@ -51,7 +51,9 @@ optimizer.load_state_dict(check_point['optimizer'])
 
 
 loss_function = nn.CrossEntropyLoss()
-optimizer=KINGHQ.KINGHQ_Optimizer(optimizer,model)
+
+
+optimizer=KINGHQ.KINGHQ_Optimizer(optimizer,model,{consistency: "ASP"})
 # print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH")
 
 import time

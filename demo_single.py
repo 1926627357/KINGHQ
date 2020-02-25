@@ -37,7 +37,7 @@ train_dataset = \
 train_sampler = torch.utils.data.distributed.DistributedSampler(
     train_dataset, num_replicas=1, rank=0, shuffle=True)
 train_loader = torch.utils.data.DataLoader(
-    train_dataset, batch_size=16, sampler=train_sampler, **kwargs)
+    train_dataset, batch_size=128, sampler=train_sampler, **kwargs)
 
 
 
