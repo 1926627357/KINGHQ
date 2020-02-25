@@ -26,34 +26,47 @@ size=KINGHQ.size()
 # print(rank)
 # # '~/Documents/pytorch_project/dataset/MNIST'
 
+# train_dataset = \
+#     datasets.MNIST('~/Documents/.datasets/MNIST'+'data-%d' % KINGHQ.rank(), train=True, download=True,
+#                    transform=transforms.Compose([
+#                        transforms.ToTensor(),
+#                        transforms.Normalize((0.1307,), (0.3081,))
+#                    ]))
 train_dataset = \
-    datasets.MNIST('~/Documents/.datasets/MNIST'+'data-%d' % KINGHQ.rank(), train=True, download=True,
-                   transform=transforms.Compose([
-                       transforms.ToTensor(),
-                       transforms.Normalize((0.1307,), (0.3081,))
-                   ]))
+    datasets.CIFAR100('~/Documents/.datasets/CIFAR100'+'data-%d' % KINGHQ.rank(), train=True, download=True,
+                        transform=transforms.Compose([
+                                        transforms.RandomCrop(32, padding=4),
+                                        transforms.RandomHorizontalFlip(),
+                                        transforms.RandomRotation(15),
+                                        transforms.ToTensor(),
+                                        transforms.Normalize(
+                                            (0.5070751592371323, 0.48654887331495095, 0.4409178433670343), 
+                                            (0.2673342858792401, 0.2564384629170883, 0.27615047132568404)
+                                            )
+                                    ])
+                   )
 
 # # Horovod: use DistributedSampler to partition the training data.
 train_sampler = torch.utils.data.distributed.DistributedSampler(
     train_dataset, num_replicas=KINGHQ.size(), rank=KINGHQ.rank(), shuffle=True)
 train_loader = torch.utils.data.DataLoader(
-    train_dataset, batch_size=128, sampler=train_sampler, **kwargs)
+    train_dataset, batch_size=264, sampler=train_sampler, **kwargs)
 
 
 
-model=lenet.LeNet5().to(device)
-# model.train()
+model=vgg.vgg13(num_class=100,batch_norm=True).to(device)
+model.train()
 optimizer=torch.optim.SGD(model.parameters(), lr=0.002)
 
-check_point=torch.load('/home/v-haiqwa/Documents/KINGHQ/config/mod_optim/Lenet')
-model.load_state_dict(check_point['state_dict'])
-optimizer.load_state_dict(check_point['optimizer'])
+# check_point=torch.load('/home/v-haiqwa/Documents/KINGHQ/config/mod_optim/Lenet')
+# model.load_state_dict(check_point['state_dict'])
+# optimizer.load_state_dict(check_point['optimizer'])
 
 
 loss_function = nn.CrossEntropyLoss()
 
 
-optimizer=KINGHQ.KINGHQ_Optimizer(optimizer,model,{consistency: "ASP"})
+optimizer=KINGHQ.KINGHQ_Optimizer(optimizer,model,{"consistency": "ASP"})
 # print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH")
 
 import time

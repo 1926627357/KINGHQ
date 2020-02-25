@@ -2,7 +2,7 @@
 import sys
 sys.path.append('/home/v-haiqwa/Documents/')
 import KINGHQ
-from KINGHQ.models import vgg,lenet
+from KINGHQ.models import mobilenetv2
 from KINGHQ.utils.utils import Log,Bar,Dice
 import torch.nn.functional as F
 import torch
@@ -27,27 +27,34 @@ kwargs = {'num_workers': 1, 'pin_memory': True} if CUDA else {}
 # # '~/Documents/pytorch_project/dataset/MNIST'
 
 train_dataset = \
-    datasets.MNIST('~/Documents/.datasets/MNIST'+'data-%d' % 0, train=True, download=True,
-                   transform=transforms.Compose([
-                       transforms.ToTensor(),
-                       transforms.Normalize((0.1307,), (0.3081,))
-                   ]))
+    datasets.CIFAR100('~/Documents/.datasets/CIFAR100'+'data-%d' % 0, train=True, download=True,
+                        transform=transforms.Compose([
+                                        transforms.RandomCrop(32, padding=4),
+                                        transforms.RandomHorizontalFlip(),
+                                        transforms.RandomRotation(15),
+                                        transforms.ToTensor(),
+                                        transforms.Normalize(
+                                            (0.5070751592371323, 0.48654887331495095, 0.4409178433670343), 
+                                            (0.2673342858792401, 0.2564384629170883, 0.27615047132568404)
+                                            )
+                                    ])
+                   )
 
 # # Horovod: use DistributedSampler to partition the training data.
 train_sampler = torch.utils.data.distributed.DistributedSampler(
     train_dataset, num_replicas=1, rank=0, shuffle=True)
 train_loader = torch.utils.data.DataLoader(
-    train_dataset, batch_size=128, sampler=train_sampler, **kwargs)
+    train_dataset, batch_size=264, sampler=train_sampler, **kwargs)
 
 
 
-model=lenet.LeNet5().to(device)
-# model.train()
+model=mobilenetv2.MobileNetV2().to(device)
+model.train()
 optimizer=torch.optim.SGD(model.parameters(), lr=0.002)
 
-check_point=torch.load('/home/v-haiqwa/Documents/KINGHQ/config/mod_optim/Lenet')
-model.load_state_dict(check_point['state_dict'])
-optimizer.load_state_dict(check_point['optimizer'])
+# check_point=torch.load('/home/v-haiqwa/Documents/KINGHQ/config/mod_optim/Lenet')
+# model.load_state_dict(check_point['state_dict'])
+# optimizer.load_state_dict(check_point['optimizer'])
 
 
 loss_function = nn.CrossEntropyLoss()
