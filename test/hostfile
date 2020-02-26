@@ -11,3 +11,4 @@ v-haiqwa@10.190.175.223:1
 
 python ./script/launch.py -s config/host/server -w config/host/worker -m config/host/master -c ASP -i /home/v-haiqwa/Documents/KINGHQ/demo.py \
 &&/home/v-haiqwa/anaconda3/envs/pytorch/bin/mpirun -np 4 -H 10.150.144.122:4 /home/v-haiqwa/anaconda3/envs/pytorch/bin/python -B /home/v-haiqwa/Documents/KINGHQ/config/exefile/demo.py 
+python ./script/launch.py -s config/host/server -w config/host/worker -m config/host/master -c ASP -i /home/v-haiqwa/Documents/KINGHQ/test/comm.py

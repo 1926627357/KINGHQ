@@ -2,7 +2,7 @@
 import sys
 sys.path.append('/home/v-haiqwa/Documents/')
 import KINGHQ
-from KINGHQ.models import vgg,lenet
+from KINGHQ.models import vgg,lenet,mobilenetv2
 from KINGHQ.utils.utils import Log,Bar,Dice
 import torch.nn.functional as F
 import torch
@@ -18,7 +18,7 @@ import torchvision.transforms as transforms
 KINGHQ.init()
 CUDA=True
 device = torch.device('cuda:{}'.format(KINGHQ.local_rank()) if CUDA else 'cpu')
-kwargs = {'num_workers': 1, 'pin_memory': True} if CUDA else {}
+kwargs = {'pin_memory': True} if CUDA else {}
 # # In fact the rank is the worker rank
 # # the size is the worker size
 rank=KINGHQ.rank()
@@ -50,12 +50,12 @@ train_dataset = \
 train_sampler = torch.utils.data.distributed.DistributedSampler(
     train_dataset, num_replicas=KINGHQ.size(), rank=KINGHQ.rank(), shuffle=True)
 train_loader = torch.utils.data.DataLoader(
-    train_dataset, batch_size=264, sampler=train_sampler, **kwargs)
+    train_dataset, batch_size=128, sampler=train_sampler, **kwargs)
 
 
 
-model=vgg.vgg13(num_class=100,batch_norm=True).to(device)
-model.train()
+model=mobilenetv2.mobilenetv2().to(device)
+# model.train()
 optimizer=torch.optim.SGD(model.parameters(), lr=0.002)
 
 # check_point=torch.load('/home/v-haiqwa/Documents/KINGHQ/config/mod_optim/Lenet')
@@ -80,7 +80,7 @@ if rank==0:
 Dice=Dice(6)
 iteration=0
 for epoch in range(10):
-    train_sampler.set_epoch(epoch)
+    # train_sampler.set_epoch(epoch)
     for batch_idx, (data, target) in enumerate(train_loader):
         if CUDA:
             data, target = data.to(device), target.to(device)

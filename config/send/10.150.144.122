@@ -1,4 +1,2 @@
-worker
-worker
-server
+masterworker
 server
