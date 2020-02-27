@@ -89,3 +89,7 @@ conda install pillow
 python setup.py install
 "if" failed to install, you could add this line to the ~/.bashrc:
 export PYTHONPATH="/home/haiqwa/Download/vision/build/lib.linux-x86_64-3.6/:$PYTHONPATH"
+
+login without password
+ssh-keygen -t rsa
+ssh-copy-id -i ~/.ssh/id_rsa.put <romte_ip>
