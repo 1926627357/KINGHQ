@@ -70,10 +70,22 @@ cd pytorch
 # git submodule sync
 # git submodule update --init --recursive
 conda install -c conda-forge openmpi
+python setup.py clean
+#export CUDA_HOME=/home/haiqwa/Documents/cuda/
+#export CUDNN_LIB_DIR=/home/haiqwa/Documents/cudnn/cuda/lib64
+#export CUDNN_INCLUDE_DIR=/home/haiqwa/Documents/cudnn/cuda/include
+#export CUDNN_LIBRARY=libcudnn.so
+#export CPLUS_INCLUDE_PATH=/home/haiqwa/Documents/cuda/include:$CPLUS_INCLUDE_PATH C_INCLUDE_PATH=/home/haiqwa/Documents/cuda/include:$C_INCLUDE_PATH
+#export LIBRARY_PATH=/home/haiqwa/Documents/cuda/lib64:$LIBRARY_PATH
+export USE_NINJA=OFF
 export CMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"}
 python setup.py install
+
+
 
 torchvision install
 git clone https://github.com/pytorch/vision.git
 conda install pillow
 python setup.py install
+"if" failed to install, you could add this line to the ~/.bashrc:
+export PYTHONPATH="/home/haiqwa/Download/vision/build/lib.linux-x86_64-3.6/:$PYTHONPATH"

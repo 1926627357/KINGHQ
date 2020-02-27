@@ -54,8 +54,8 @@ train_loader = torch.utils.data.DataLoader(
 
 
 
-model=mobilenetv2.mobilenetv2().to(device)
-# model.train()
+model=mobilenetv2.MobileNetV2().to(device)
+model.train()
 optimizer=torch.optim.SGD(model.parameters(), lr=0.002)
 
 # check_point=torch.load('/home/v-haiqwa/Documents/KINGHQ/config/mod_optim/Lenet')
