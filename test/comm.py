@@ -7,7 +7,7 @@ import torch.distributed as dist
 
 dist.init_process_group(backend="mpi")
 device="cuda:%d"%dist.get_rank()
-print("hello world")
+
 # device="cpu"
 model=vgg.vgg19().to(device)
 optimizer=torch.optim.SGD(model.parameters(),lr=0.002)
@@ -16,6 +16,7 @@ import time
 t1=time.time()
 for group in optimizer.param_groups:
     for p in group['params']:
+    print("hello world")
         if dist.get_rank()==0:
             p_temp=p.to("cpu")
             dist.send(tensor=torch.tensor([1.,2.,3.]),dst=1,tag=0)
