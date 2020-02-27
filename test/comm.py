@@ -16,6 +16,7 @@ import time
 t1=time.time()
 for group in optimizer.param_groups:
   for p in group['params']:
+    print("hello!!!%d"%dist.get_rank())
     if dist.get_rank()==0:
       p_temp=p.to("cpu")
       dist.send(tensor=torch.tensor([1.,2.,3.]),dst=1,tag=0)
