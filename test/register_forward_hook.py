@@ -1,5 +1,5 @@
 import sys
-sys.path.append('/home/v-haiqwa/Documents/')
+sys.path.append('/home/haiqwa/Documents/')
 from KINGHQ.models import lenet
 import torch
 import torchvision

@@ -1,5 +1,5 @@
 import sys
-sys.path.append('/home/v-haiqwa/Documents/')
+sys.path.append('/home/haiqwa/Documents/')
 from KINGHQ.models import lenet
 import torch
 import torchvision
@@ -25,7 +25,6 @@ def get_all_children(model):
     return submodule
 
 
-submodel = get_all_children(model)# 子模块还包括了激励函数，激励函数没有参数
-print(submodel[2])
+submodel = get_all_children(model)# 子模块还包括了激励函数，激励函数没有参�?print(submodel[2])
 for p in submodel[1].parameters():
     print(p)
