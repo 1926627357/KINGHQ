@@ -1,5 +1,5 @@
 import sys
-sys.path.append('/home/v-haiqwa/Documents/')
+sys.path.append('/home/haiqwa/Documents/')
 import KINGHQ
 from KINGHQ.models import vgg,lenet,mobilenetv2
 import torch
