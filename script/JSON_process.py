@@ -2,7 +2,7 @@ import json5
 import json
 from argparse import ArgumentParser
 
-relative_path='/home/v-haiqwa/Documents/KINGHQ'
+relative_path='/home/haiqwa/Documents/KINGHQ'
 
 parser = ArgumentParser(description="I'm JSON process owned by Haiquan Wang")
 

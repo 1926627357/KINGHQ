@@ -1,6 +1,6 @@
 import os
 
-ROOT_DIR = '/home/v-haiqwa/Documents/KINGHQ/'
+ROOT_DIR = '/home/haiqwa/Documents/KINGHQ/'
 
 from argparse import ArgumentParser
 parser = ArgumentParser(description="I'm launcher script file of KINGHQ project owned by Haiquan Wang")
@@ -98,13 +98,13 @@ for ip,role_list in machine2role.items():
     filepath = ROOT_DIR + "/config/send/" + ip 
     with open(filepath,'w') as f:
         f.writelines(role_list)
-    excuteCommand('ssh v-haiqwa@'+ip+' '+'rm -rf /home/v-haiqwa/Documents/KINGHQ/config/recv')
-    excuteCommand('ssh v-haiqwa@'+ip+' '+'mkdir /home/v-haiqwa/Documents/KINGHQ/config/recv')
-    excuteCommand('scp '+filepath+' v-haiqwa@'+ip+':/home/v-haiqwa/Documents/KINGHQ/config/recv/')
+    excuteCommand('ssh haiqwa@'+ip+' '+'rm -rf /home/haiqwa/Documents/KINGHQ/config/recv')
+    excuteCommand('ssh haiqwa@'+ip+' '+'mkdir /home/haiqwa/Documents/KINGHQ/config/recv')
+    excuteCommand('scp '+filepath+' haiqwa@'+ip+':/home/haiqwa/Documents/KINGHQ/config/recv/')
 
-    excuteCommand('ssh v-haiqwa@'+ip+' '+'rm -rf /home/v-haiqwa/Documents/KINGHQ/config/exefile')
-    excuteCommand('ssh v-haiqwa@'+ip+' '+'mkdir /home/v-haiqwa/Documents/KINGHQ/config/exefile')
-    excuteCommand('scp '+args.input+' v-haiqwa@'+ip+':/home/v-haiqwa/Documents/KINGHQ/config/exefile/')
+    excuteCommand('ssh haiqwa@'+ip+' '+'rm -rf /home/haiqwa/Documents/KINGHQ/config/exefile')
+    excuteCommand('ssh haiqwa@'+ip+' '+'mkdir /home/haiqwa/Documents/KINGHQ/config/exefile')
+    excuteCommand('scp '+args.input+' haiqwa@'+ip+':/home/haiqwa/Documents/KINGHQ/config/exefile/')
 
 print("size: %d"%size)
 print("local size ",local_size)
@@ -113,7 +113,7 @@ print("local size ",local_size)
 print("END")
 print("*"*50)
 
-MPI_COMMAND = "/home/v-haiqwa/anaconda3/envs/pytorch/bin/mpirun -np "+str(size)+" -H "
+MPI_COMMAND = "/home/haiqwa/anaconda3/envs/pytorch/bin/mpirun -np "+str(size)+" -H "
 
 for ip,s in local_size.items():
     MPI_COMMAND+=ip+":"+str(s)+","
@@ -121,7 +121,7 @@ for ip,s in local_size.items():
 MPI_COMMAND=MPI_COMMAND[:-1]
 
 
-MPI_COMMAND+=" /home/v-haiqwa/anaconda3/envs/pytorch/bin/python -B "+"/home/v-haiqwa/Documents/KINGHQ/config/exefile/"+args.input.split('/')[-1]
+MPI_COMMAND+=" /home/haiqwa/anaconda3/envs/pytorch/bin/python -B "+"/home/haiqwa/Documents/KINGHQ/config/exefile/"+args.input.split('/')[-1]
 
 print(MPI_COMMAND)
 # print(excuteCommand(MPI_COMMAND))

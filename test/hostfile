@@ -1,14 +1,14 @@
-v-haiqwa@10.150.144.122:1
-v-haiqwa@10.190.175.223:1
+haiqwa@10.150.144.122:1
+haiqwa@10.190.175.223:1
 
-/home/v-haiqwa/anaconda3/envs/pytorch/bin/mpirun -np 4 \
+/home/haiqwa/anaconda3/envs/pytorch/bin/mpirun -np 4 \
 -H 10.190.175.223:2,10.150.144.122:2 \
-/home/v-haiqwa/anaconda3/envs/pytorch/bin/python /home/v-haiqwa/Documents/KINGHQ/test/distributed.py
+/home/haiqwa/anaconda3/envs/pytorch/bin/python /home/haiqwa/Documents/KINGHQ/test/distributed.py
 
 -bind-to none -map-by slot \
 -x NCCL_DEBUG=INFO -x LD_LIBRARY_PATH -x PATH \
 -mca pml ob1 -mca btl ^openib \
 
-python ./script/launch.py -s config/host/server -w config/host/worker -m config/host/master -c ASP -i /home/v-haiqwa/Documents/KINGHQ/demo.py \
-&&/home/v-haiqwa/anaconda3/envs/pytorch/bin/mpirun -np 4 -H 10.150.144.122:4 /home/v-haiqwa/anaconda3/envs/pytorch/bin/python -B /home/v-haiqwa/Documents/KINGHQ/config/exefile/demo.py 
-python ./script/launch.py -s config/host/server -w config/host/worker -m config/host/master -c ASP -i /home/v-haiqwa/Documents/KINGHQ/test/comm.py
+python ./script/launch.py -s config/host/server -w config/host/worker -m config/host/master -c ASP -i /home/haiqwa/Documents/KINGHQ/demo.py \
+&&/home/haiqwa/anaconda3/envs/pytorch/bin/mpirun -np 4 -H 10.150.144.122:4 /home/haiqwa/anaconda3/envs/pytorch/bin/python -B /home/haiqwa/Documents/KINGHQ/config/exefile/demo.py 
+python ./script/launch.py -s config/host/server -w config/host/worker -m config/host/master -c ASP -i /home/haiqwa/Documents/KINGHQ/test/comm.py

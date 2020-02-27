@@ -1,6 +1,6 @@
 
 import sys
-sys.path.append('/home/v-haiqwa/Documents/')
+sys.path.append('/home/haiqwa/Documents/')
 import KINGHQ
 from KINGHQ.models import vgg,lenet
 import torch
@@ -12,6 +12,6 @@ state={
     'state_dict':model.state_dict(),
     'optimizer':optimizer.state_dict()
 }
-path='/home/v-haiqwa/Documents/KINGHQ/model_state/Lenet'
+path='/home/haiqwa/Documents/KINGHQ/model_state/Lenet'
 
 torch.save(state,path)

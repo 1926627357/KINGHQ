@@ -1,12 +1,12 @@
 import sys
-sys.path.append('/home/v-haiqwa/Documents/')
+sys.path.append('/home/haiqwa/Documents/')
 
 import os
 
 from argparse import ArgumentParser
 from KINGHQ.utils.utils import CSV,Figure
 
-LOG_DIR = '/home/v-haiqwa/Documents/KINGHQ/log'
+LOG_DIR = '/home/haiqwa/Documents/KINGHQ/log'
 
 parser = ArgumentParser(description="I'm Figure Drawer owned by Haiquan Wang")
 
@@ -20,9 +20,9 @@ args = parser.parse_args()
 
 def draw_from_csv(files):
     iter_acc = Figure('iteration-training accuracy','Iterations','Accuracy',
-                    '/home/v-haiqwa/Documents/KINGHQ/figure/I-A.png')
+                    '/home/haiqwa/Documents/KINGHQ/figure/I-A.png')
     time_acc = Figure('time-training accuracy','Time','Accuracy',
-                    '/home/v-haiqwa/Documents/KINGHQ/figure/T-A.png')
+                    '/home/haiqwa/Documents/KINGHQ/figure/T-A.png')
     for name, path in files.items():
         csv_file=CSV(path)
         iter_acc.add(csv_file('iterations'),csv_file('accuracy'),label=name)
@@ -39,7 +39,7 @@ if args.all:
         # dirnames: subdirs
         # filenames: all files in the current root dir
         for each in filenames:
-            # eg. BSP: /home/v-haiqwa/Documents/KINGHQ/log/BSP.csv
+            # eg. BSP: /home/haiqwa/Documents/KINGHQ/log/BSP.csv
             files[os.path.splitext(each)[0]]=os.path.join(dirpath,each)
     draw_from_csv(files)
 

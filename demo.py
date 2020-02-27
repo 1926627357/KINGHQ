@@ -1,6 +1,6 @@
 # print("HHHHHHHHHHHHHHHHHHHHHHHHH")
 import sys
-sys.path.append('/home/v-haiqwa/Documents/')
+sys.path.append('/home/haiqwa/Documents/')
 import KINGHQ
 from KINGHQ.models import vgg,lenet,mobilenetv2
 from KINGHQ.utils.utils import Log,Bar,Dice
@@ -58,7 +58,7 @@ model=mobilenetv2.MobileNetV2().to(device)
 model.train()
 optimizer=torch.optim.SGD(model.parameters(), lr=0.002)
 
-# check_point=torch.load('/home/v-haiqwa/Documents/KINGHQ/config/mod_optim/Lenet')
+# check_point=torch.load('/home/haiqwa/Documents/KINGHQ/config/mod_optim/Lenet')
 # model.load_state_dict(check_point['state_dict'])
 # optimizer.load_state_dict(check_point['optimizer'])
 
@@ -75,7 +75,7 @@ if rank==0:
     bar=Bar(total=len(train_loader)*10, description=' worker progress')
     log=Log(title='Single machine',\
             Axis_title=['iterations', 'time', 'accuracy'],\
-            path='/home/v-haiqwa/Documents/KINGHQ/log/BSP_w3.csv',\
+            path='/home/haiqwa/Documents/KINGHQ/log/BSP_w3.csv',\
             step=21)
 Dice=Dice(6)
 iteration=0

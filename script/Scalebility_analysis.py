@@ -45,4 +45,4 @@ autolabel(rects4)
 
 fig.tight_layout()
 
-fig.savefig('/home/v-haiqwa/Documents/KINGHQ/figure/scale')
+fig.savefig('/home/haiqwa/Documents/KINGHQ/figure/scale')

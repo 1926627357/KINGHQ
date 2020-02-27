@@ -22,7 +22,7 @@ class Utils:
         self.KVStore=KVStore(0)
         self.strategy=None
 
-        self.role_path="/home/v-haiqwa/Documents/KINGHQ/config/recv/"
+        self.role_path="/home/haiqwa/Documents/KINGHQ/config/recv/"
         # record the workers, servers, masters' ranks in a format of list
         self.workers=[]
         self.servers=[]
