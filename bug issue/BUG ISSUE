@@ -92,4 +92,4 @@ export PYTHONPATH="/home/haiqwa/Download/vision/build/lib.linux-x86_64-3.6/:$PYT
 
 login without password
 ssh-keygen -t rsa
-ssh-copy-id -i ~/.ssh/id_rsa.pud <romte_ip>
+ssh-copy-id -i ~/.ssh/id_rsa.pub <romte_ip>
