@@ -50,11 +50,11 @@ train_dataset = \
 train_sampler = torch.utils.data.distributed.DistributedSampler(
     train_dataset, num_replicas=KINGHQ.size(), rank=KINGHQ.rank(), shuffle=True)
 train_loader = torch.utils.data.DataLoader(
-    train_dataset, batch_size=264, sampler=train_sampler, **kwargs)
+    train_dataset, batch_size=128, sampler=train_sampler, **kwargs)
 
 
 
-model=mobilenetv2.MobileNetV2().to(device)
+model=vgg.vgg19().to(device)
 model.train()
 optimizer=torch.optim.SGD(model.parameters(), lr=0.002)
 
