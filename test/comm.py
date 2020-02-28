@@ -29,7 +29,7 @@ for group in optimizer.param_groups:
       p.detach().add_(p_temp)
     else:
       p_temp=torch.randn(p.size())
-      print("I am-%d: I try to send [1,2,3]"%dist.get_rank())
+      print("I am-%d: I try to recv [1,2,3]"%dist.get_rank())
       dist.recv(tensor=torch.tensor([1.,2.,3.]),src=0,tag=0)
       print("I am-%d: I try to recv param"%dist.get_rank())
       dist.recv(tensor=p_temp,src=0,tag=1)
