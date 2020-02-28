@@ -19,15 +19,21 @@ for group in optimizer.param_groups:
     print("hello!!!%d"%dist.get_rank())
     if dist.get_rank()==0:
       p_temp=p.to("cpu")
+      print("I am-%d: I try to send [1,2,3]"%dist.get_rank())
       dist.send(tensor=torch.tensor([1.,2.,3.]),dst=1,tag=0)
+      print("I am-%d: I try to send param"%dist.get_rank())
       dist.send(tensor=p_temp,dst=1,tag=1)
+      print("I am-%d: I try to recv param"%dist.get_rank())
       dist.recv(tensor=p_temp,src=1,tag=2)
       p_temp=p_temp.to(device)
       p.detach().add_(p_temp)
     else:
       p_temp=torch.randn(p.size())
+      print("I am-%d: I try to send [1,2,3]"%dist.get_rank())
       dist.recv(tensor=torch.tensor([1.,2.,3.]),src=0,tag=0)
+      print("I am-%d: I try to recv param"%dist.get_rank())
       dist.recv(tensor=p_temp,src=0,tag=1)
+      print("I am-%d: I try to send param"%dist.get_rank())
       dist.send(tensor=p_temp,dst=0,tag=2)
     
 t2=time.time()
