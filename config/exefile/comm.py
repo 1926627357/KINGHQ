@@ -6,9 +6,9 @@ import torch
 import torch.distributed as dist
 
 dist.init_process_group(backend="mpi")
-#device="cuda:%d"%dist.get_rank()
+device="cuda:%d"%dist.get_rank()
 
-device="cpu"
+# device="cpu"
 model=vgg.vgg19().to(device)
 optimizer=torch.optim.SGD(model.parameters(),lr=0.002)
 import time

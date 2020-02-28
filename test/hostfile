@@ -17,4 +17,5 @@ python ./script/launch.py -s config/host/server -w config/host/worker -m config/
 /home/haiqwa/anaconda3/envs/pytorch/bin/mpirun -np 2 -H 192.168.1.51:1,192.168.1.49:1 /home/haiqwa/anaconda3/envs/pytorch/bin/python -B /home/haiqwa/Documents/KINGHQ/test/distributed.py
 
 /home/haiqwa/anaconda3/envs/pytorch/bin/mpirun -np 2 -H 192.168.1.51:1,192.168.1.49:1 /home/haiqwa/anaconda3/envs/pytorch/bin/python -B /home/haiqwa/Documents/KINGHQ/test/comm.py
-/home/haiqwa/anaconda3/envs/pytorch/bin/mpirun -np 1 -H 192.168.2.50:1 /home/haiqwa/anaconda3/envs/pytorch/bin/python -B /home/haiqwa/Documents/KINGHQ/test/comm.py
+/home/haiqwa/anaconda3/envs/pytorch/bin/mpirun -np 2 -H 192.168.2.49:2 /home/haiqwa/anaconda3/envs/pytorch/bin/python -B /home/haiqwa/Documents/KINGHQ/test/comm.py
+mpirun -np 2 --host /home/haiqwa/Documents/KINGHQ/hostfile /home/haiqwa/anaconda3/envs/pytorch/bin/python -B /home/haiqwa/Documents/KINGHQ/test/comm.py
