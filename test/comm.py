@@ -9,7 +9,7 @@ dist.init_process_group(backend="mpi")
 device="cuda:%d"%dist.get_rank()
 
 #device="cpu"
-model=mobilenetv2.mobilenetv2().to(device)
+model=vgg.vgg19().to(device)
 optimizer=torch.optim.SGD(model.parameters(),lr=0.002)
 import time
 
