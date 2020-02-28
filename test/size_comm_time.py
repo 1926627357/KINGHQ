@@ -3,7 +3,7 @@ import torch
 import torch.distributed as dist
 
 dist.init_process_group(backend="mpi")
-t=torch.randn(100,100,dtype=torch.float)
+t=torch.randn(10000,10000,dtype=torch.float)
 dist.barrier()
 
 import time
