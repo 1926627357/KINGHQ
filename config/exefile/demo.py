@@ -54,7 +54,7 @@ train_loader = torch.utils.data.DataLoader(
 
 
 
-model=vgg.vgg13().to(device)
+model=mobilenetv2.mobilenetv2().to(device)
 model.train()
 optimizer=torch.optim.SGD(model.parameters(), lr=0.002)
 
@@ -70,16 +70,16 @@ optimizer=KINGHQ.KINGHQ_Optimizer(optimizer,model,{"consistency": "ASP","stalene
 # print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH")
 
 import time
-
+EPOCH=100
 if rank==0:
-    bar=Bar(total=len(train_loader)*10, description=' worker progress')
+    bar=Bar(total=len(train_loader)*EPOCH, description=' worker progress')
     log=Log(title='Single machine',\
             Axis_title=['iterations', 'time', 'accuracy'],\
             path='/home/haiqwa/Documents/KINGHQ/log/BSP_w3.csv',\
             step=21)
 Dice=Dice(6)
 iteration=0
-for epoch in range(10):
+for epoch in range(EPOCH):
     # train_sampler.set_epoch(epoch)
     for batch_idx, (data, target) in enumerate(train_loader):
         if CUDA:
@@ -131,8 +131,8 @@ if rank==0:
 
 
 print("worker:%d done"%rank)
-
-KINGHQ.shut_down()
+if rank==0:
+    KINGHQ.shut_down()
         
 
 

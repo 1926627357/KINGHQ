@@ -135,8 +135,10 @@ class Worker(Role):
         self.optimizer.step()
         for group in self.optimizer.param_groups:
             for p in group['params']:
+                
                 self.paramkey_lock[self.param_key_map[p]].acquire()
                 # print("send pull req")
+                
                 req=PullReqMsg(key=self.param_key_map[p],version=0,src=self.util.world_rank,dst=self.param_rank_map[p],ctx=self)
                 self.core.post(msg=req,ctx=self)
         
