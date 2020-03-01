@@ -54,8 +54,8 @@ train_loader = torch.utils.data.DataLoader(
 
 
 
-model=mobilenetv2.mobilenetv2().to(device)
-model.train()
+model=mobilenetv2.MobileNetV2().to(device)
+# model.train()
 optimizer=torch.optim.SGD(model.parameters(), lr=0.002)
 
 # check_point=torch.load('/home/haiqwa/Documents/KINGHQ/config/mod_optim/Lenet')
@@ -66,7 +66,7 @@ optimizer=torch.optim.SGD(model.parameters(), lr=0.002)
 loss_function = nn.CrossEntropyLoss()
 
 
-optimizer=KINGHQ.KINGHQ_Optimizer(optimizer,model,{"consistency": "ASP","staleness":3})
+optimizer=KINGHQ.KINGHQ_Optimizer(optimizer,model,{"consistency": "ASP"})
 # print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH")
 
 import time
@@ -131,6 +131,7 @@ if rank==0:
 
 
 print("worker:%d done"%rank)
+
 if rank==0:
     KINGHQ.shut_down()
         
