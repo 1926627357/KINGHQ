@@ -129,6 +129,8 @@ class Server(Role):
                 # when the requester run no more 0 step than the slowest one
                 return True
             else:
+                print(min(self.clock_vector[req.key]))
+                print(self.clock_vector[req.key][req.src])
                 return False
                 
         elif self.strategy['consistency']=="SSP":
@@ -150,13 +152,13 @@ class Server(Role):
                 # value=self.KVStore(Req.key)[Req.key].detach().clone()
                 # Res=ResMsg(msgtype="PullResMsg",key=Req.key,value=value,src=Req.dst,dst=Req.src)
                 # self.response_queue.put(Res)
-                print("I get a pull request")
+                # print("I get a pull request")
                 if self.check(Req):
                     value=self.KVStore(Req.key)[Req.key].detach().clone()
                     Res=ResMsg(msgtype="PullResMsg",key=Req.key,value=value,src=Req.dst,dst=Req.src)
                     self.response_queue.put(Res)
                 else:
-                    print("But I can't send it now!")
+                    # print("But I can't send it now!")
                     self.request_queue.put(Req)
 
 if __name__ == "__main__":
