@@ -54,7 +54,7 @@ train_loader = torch.utils.data.DataLoader(
 
 
 
-model=vgg.vgg19().to(device)
+model=vgg.vgg13().to(device)
 model.train()
 optimizer=torch.optim.SGD(model.parameters(), lr=0.002)
 
@@ -66,7 +66,7 @@ optimizer=torch.optim.SGD(model.parameters(), lr=0.002)
 loss_function = nn.CrossEntropyLoss()
 
 
-optimizer=KINGHQ.KINGHQ_Optimizer(optimizer,model,{"consistency": "ASP"})
+optimizer=KINGHQ.KINGHQ_Optimizer(optimizer,model,{"consistency": "ASP","staleness":3})
 # print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH")
 
 import time

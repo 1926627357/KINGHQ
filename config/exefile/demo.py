@@ -54,7 +54,7 @@ train_loader = torch.utils.data.DataLoader(
 
 
 
-model=vgg.vgg19().to(device)
+model=vgg.vgg13().to(device)
 model.train()
 optimizer=torch.optim.SGD(model.parameters(), lr=0.002)
 
@@ -79,7 +79,7 @@ if rank==0:
             step=21)
 Dice=Dice(6)
 iteration=0
-for epoch in range(10):
+for epoch in range(1):
     # train_sampler.set_epoch(epoch)
     for batch_idx, (data, target) in enumerate(train_loader):
         if CUDA:
@@ -131,6 +131,8 @@ if rank==0:
 
 
 print("worker:%d done"%rank)
+
+KINGHQ.shut_down()
         
 
 

@@ -66,12 +66,14 @@ class Worker(Role):
         def hook(mod,input):
             
             for p in mod.parameters():
-                
-                self.paramkey_lock[self.param_key_map[p]].acquire()
-                
-                # print("worker: I'm in the forward-key:{}".format(self.param_key_map[p]))
-                
-                self.paramkey_lock[self.param_key_map[p]].release()
+                if self.strategy['consistency']=='ASP':
+                    pass
+                else:
+                    self.paramkey_lock[self.param_key_map[p]].acquire()
+                    # print("worker: I'm in the forward-key:{}".format(self.param_key_map[p]))
+                    self.paramkey_lock[self.param_key_map[p]].release()
+
+
         for submod in submodel:
             submod.register_forward_pre_hook(hook)
 
@@ -136,8 +138,10 @@ class Worker(Role):
             self.optimizer.step()
         for group in self.optimizer.param_groups:
             for p in group['params']:
-                
-                self.paramkey_lock[self.param_key_map[p]].acquire()
+                if self.strategy['consistency']=='ASP':
+                    self.paramkey_lock[self.param_key_map[p]].acquire(True if self.clock%self.strategy['staleness']==0 else False)
+                else:
+                    self.paramkey_lock[self.param_key_map[p]].acquire()
                 # print("send pull req")
                 
                 req=PullReqMsg(key=self.param_key_map[p],version=0,src=self.util.world_rank,dst=self.param_rank_map[p],ctx=self)
