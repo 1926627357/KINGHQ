@@ -106,12 +106,7 @@ class Worker(Role):
                         
                         Res=msg.get_response()
                         self.handle_res(Res)
-                    
-
-                        if self.strategy['consistency']=='ASP':
-                            pass
-                        else:
-                            self.paramkey_lock[Res.key].release()
+                        self.paramkey_lock[Res.key].release()
                     else:
                         # if msg.key==12 and msg.type=="PullReqMsg":
                         #     print("Not Completed")
