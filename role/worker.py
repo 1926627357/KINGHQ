@@ -23,10 +23,8 @@ class Worker(Role):
         self.param_rank_map=self.util.partition_model(self.optimizer)
         # print(self.param_rank_map)
         self.register_KVStore()
-        if self.strategy['consistency']=='ASP':
-            pass
-        else:
-            self.paramkey_lock={key: threading.Lock() for _,key in self.param_key_map.items()}
+        
+        self.paramkey_lock={key: threading.Lock() for _,key in self.param_key_map.items()}
 
         # register the backward and forward hook function
         self.register_bhook()
@@ -68,16 +66,12 @@ class Worker(Role):
         def hook(mod,input):
             
             for p in mod.parameters():
-                if self.strategy['consistency']=='ASP':
-                    pass
-                else:
-                    self.paramkey_lock[self.param_key_map[p]].acquire()
                 
-                    # print("worker: I'm in the forward-key:{}".format(self.param_key_map[p]))
-                if self.strategy['consistency']=='ASP':
-                    pass
-                else:
-                    self.paramkey_lock[self.param_key_map[p]].release()
+                self.paramkey_lock[self.param_key_map[p]].acquire()
+                
+                # print("worker: I'm in the forward-key:{}".format(self.param_key_map[p]))
+                
+                self.paramkey_lock[self.param_key_map[p]].release()
         for submod in submodel:
             submod.register_forward_pre_hook(hook)
 
@@ -135,10 +129,8 @@ class Worker(Role):
         # print("begin to pull")
         for group in self.optimizer.param_groups:
             for p in group['params']:
-                if self.strategy['consistency']=='ASP':
-                    pass
-                else:
-                    self.paramkey_lock[self.param_key_map[p]].acquire()
+                
+                self.paramkey_lock[self.param_key_map[p]].acquire()
                 # print("send pull req")
                 
                 req=PullReqMsg(key=self.param_key_map[p],version=0,src=self.util.world_rank,dst=self.param_rank_map[p],ctx=self)
