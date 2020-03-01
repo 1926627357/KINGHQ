@@ -54,7 +54,7 @@ train_loader = torch.utils.data.DataLoader(
 
 
 
-model=mobilenetv2.MobileNetV2().to(device)
+model=mobilenetv2.mobilenetv2().to(device)
 # model.train()
 optimizer=torch.optim.SGD(model.parameters(), lr=0.002)
 
@@ -70,7 +70,7 @@ optimizer=KINGHQ.KINGHQ_Optimizer(optimizer,model,{"consistency": "ASP"})
 # print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH")
 
 import time
-EPOCH=100
+EPOCH=10
 if rank==0:
     bar=Bar(total=len(train_loader)*EPOCH, description=' worker progress')
     log=Log(title='Single machine',\

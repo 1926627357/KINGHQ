@@ -65,13 +65,13 @@ class Worker(Role):
         submodel=self.util.get_submodel(self.model)
         def hook(mod,input):
             for p in mod.parameters():
-                if self.strategy['consistency']=='ASP':
-                    pass
-                # ASP: no need to wait for pull
-                else:
-                    self.paramkey_lock[self.param_key_map[p]].acquire()
+                # if self.strategy['consistency']=='ASP':
+                #     pass
+                # # ASP: no need to wait for pull
+                # else:
+                self.paramkey_lock[self.param_key_map[p]].acquire()
                     # print("worker: I'm in the forward-key:{}".format(self.param_key_map[p]))
-                    self.paramkey_lock[self.param_key_map[p]].release()
+                self.paramkey_lock[self.param_key_map[p]].release()
         for submod in submodel:
             submod.register_forward_pre_hook(hook)
 
@@ -132,7 +132,7 @@ class Worker(Role):
         # push->apply->pull
         self.clock+=1
         # print("begin to pull")
-        # self.optimizer.step()
+        self.optimizer.step()
         for group in self.optimizer.param_groups:
             for p in group['params']:
                 
