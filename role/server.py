@@ -129,8 +129,8 @@ class Server(Role):
                 # when the requester run no more 0 step than the slowest one
                 return True
             else:
-                print(min(self.clock_vector[req.key]))
-                print(self.clock_vector[req.key][req.src])
+                
+                print(self.clock_vector[req.key])
                 return False
                 
         elif self.strategy['consistency']=="SSP":
