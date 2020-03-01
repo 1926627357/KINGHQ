@@ -20,6 +20,6 @@ python ./script/launch.py -s config/host/server -w config/host/worker -m config/
 
 
 /home/haiqwa/anaconda3/envs/pytorch/bin/mpirun -np 12 -H 10.0.0.49:4,10.0.0.50:4,10.0.0.51:4 -mca btl_tcp_if_include 10.0.0.0/24 /home/haiqwa/anaconda3/envs/pytorch/bin/python -B /home/haiqwa/Documents/KINGHQ/config/exefile/demo.py
-
+/home/haiqwa/anaconda3/envs/pytorch/bin/mpirun -np 2 -H 10.0.0.49:1,10.0.0.51:1 -mca btl_tcp_if_include 10.0.0.0/24 /home/haiqwa/anaconda3/envs/pytorch/bin/python -B /home/haiqwa/Documents/KINGHQ/config/exefile/demo.py
 
 

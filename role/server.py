@@ -150,11 +150,13 @@ class Server(Role):
                 # value=self.KVStore(Req.key)[Req.key].detach().clone()
                 # Res=ResMsg(msgtype="PullResMsg",key=Req.key,value=value,src=Req.dst,dst=Req.src)
                 # self.response_queue.put(Res)
+                print("I get a pull request")
                 if self.check(Req):
                     value=self.KVStore(Req.key)[Req.key].detach().clone()
                     Res=ResMsg(msgtype="PullResMsg",key=Req.key,value=value,src=Req.dst,dst=Req.src)
                     self.response_queue.put(Res)
                 else:
+                    print("But I can't send it now!")
                     self.request_queue.put(Req)
 
 if __name__ == "__main__":
