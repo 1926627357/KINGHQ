@@ -14,6 +14,7 @@ size=util.get_worker_size
 broadcast_model=util.broadcast_model
 local_rank=util.get_local_worker_rank
 local_size=util.get_local_worker_size
+shut_down=util.shut_down
 class _DistributedOptimizer(torch.optim.Optimizer):
     def __init__(self,params,worker):
         super(self.__class__, self).__init__(params)
