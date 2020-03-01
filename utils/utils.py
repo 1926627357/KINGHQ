@@ -139,7 +139,6 @@ class Utils:
         for p in model.parameters():
             dist.broadcast(p,src=self.master_worker)
     def shut_down(self):
-        self.barrier()
         dist.destroy_process_group()
 
     def get_KVStore(self):
