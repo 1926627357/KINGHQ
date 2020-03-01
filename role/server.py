@@ -138,8 +138,8 @@ class Server(Role):
             Req=self.get_request()
             # print(Req.type)
             if Req.type=="PushReqMsg":
-                Res=ResMsg(msgtype="PushResMsg")
-                self.response_queue.put(Res)
+                # Res=ResMsg(msgtype="PushResMsg")
+                # self.response_queue.put(Res)
                 self.clock_vector[Req.key][Req.src]+=1
                 self.aggregate(req=Req)
                 self.apply(req=Req)
