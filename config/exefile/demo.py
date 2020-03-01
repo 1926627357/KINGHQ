@@ -132,7 +132,7 @@ if rank==0:
 
 print("worker:%d done"%rank)
 
-KINGHQ.shut_down()
+# KINGHQ.shut_down()
         
 
 

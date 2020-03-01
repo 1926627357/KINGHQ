@@ -14,12 +14,12 @@ def _loop(lock):
 lock = threading.Lock()
 # thread = threading.Thread(target=_loop,args=(lock,))   # python识别元组
 # thread.start()
-lock.acquire(True)
-lock.acquire(True)
+lock.acquire(False)
+lock.acquire(False)
 lock.acquire(False)
 print("wo")
 lock.release()
-lock.acquire()
+lock.acquire(True)
 
 print("wo")
 

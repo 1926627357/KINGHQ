@@ -79,7 +79,7 @@ if rank==0:
             step=21)
 Dice=Dice(6)
 iteration=0
-for epoch in range(1):
+for epoch in range(10):
     # train_sampler.set_epoch(epoch)
     for batch_idx, (data, target) in enumerate(train_loader):
         if CUDA:
