@@ -113,7 +113,7 @@ class Server(Role):
             self.optimizer.step()
             self.KVStore(req.key)[req.key].grad=None
         elif self.strategy['consistency']=="BSP":
-            if max(self.clock_vector[req.key])==min(self.clock_vector[req.key]):
+            if max(self.clock_vector[req.key].values())==min(self.clock_vector[req.key].values()):
                 # apply when the server aggregate all the gradients from workers
                 self.KVStore(req.key)[req.key].grad=self.buffer[req.key]
                 self.optimizer.step()
@@ -125,12 +125,11 @@ class Server(Role):
         if self.strategy['consistency']=="ASP":
             return True
         elif self.strategy['consistency']=="BSP":
-            if self.clock_vector[req.key][req.src]==min(self.clock_vector[req.key]):
+            if self.clock_vector[req.key][req.src]==min(self.clock_vector[req.key].values()):
                 # when the requester run no more 0 step than the slowest one
                 return True
             else:
-                
-                print(self.clock_vector[req.key])
+                # print(self.clock_vector[req.key])
                 return False
                 
         elif self.strategy['consistency']=="SSP":
