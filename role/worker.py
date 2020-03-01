@@ -14,7 +14,7 @@ class Worker(Role):
         super().__init__(util.get_KVStore())
         self.comm_queue=queue.Queue()
         self.mailbox=threading.Thread(target=self.loop_)
-        self.key_res={}
+        
         self.core=Core()
     def init(self):
         
@@ -23,8 +23,10 @@ class Worker(Role):
         self.param_rank_map=self.util.partition_model(self.optimizer)
         # print(self.param_rank_map)
         self.register_KVStore()
-
-        self.paramkey_lock={key: threading.Lock() for _,key in self.param_key_map.items()}
+        if self.strategy['consistency']=='ASP':
+            pass
+        else:
+            self.paramkey_lock={key: threading.Lock() for _,key in self.param_key_map.items()}
 
         # register the backward and forward hook function
         self.register_bhook()
@@ -34,12 +36,15 @@ class Worker(Role):
     def b_hook(self, p):
         def hook(* ignore):
             # acquire the lock before send it
-            
-            self.paramkey_lock[self.param_key_map[p]].acquire()
+            if self.strategy['consistency']=='ASP':
+                pass
+            else:
+                self.paramkey_lock[self.param_key_map[p]].acquire()
             
             msg=PushReqMsg(key=self.param_key_map[p],value=p.grad,src=self.util.world_rank,dst=self.param_rank_map[p],ctx=self)
             # print(self.param_key_map[p])
             # print(self.util.world_rank)
+            
             self.core.post(msg=msg,ctx=self)
             
         return hook
@@ -63,12 +68,16 @@ class Worker(Role):
         def hook(mod,input):
             
             for p in mod.parameters():
-                self.paramkey_lock[self.param_key_map[p]].acquire()
-                if self.param_key_map[p] in self.key_res.keys():
-                    value=self.key_res[self.param_key_map[p]].value
-                    p.detach().zero_().add_(value)
+                if self.strategy['consistency']=='ASP':
+                    pass
+                else:
+                    self.paramkey_lock[self.param_key_map[p]].acquire()
+                
                     # print("worker: I'm in the forward-key:{}".format(self.param_key_map[p]))
-                self.paramkey_lock[self.param_key_map[p]].release()
+                if self.strategy['consistency']=='ASP':
+                    pass
+                else:
+                    self.paramkey_lock[self.param_key_map[p]].release()
         for submod in submodel:
             submod.register_forward_pre_hook(hook)
 
@@ -84,7 +93,10 @@ class Worker(Role):
                 key=self.KVStore.register_new_key(value=p,name="params")
                 self.param_key_map[p]=key
         
-
+    def handle_res(self,res):
+        if res.type=='PullResMsg':
+            p=self.KVStore(res.key)[res.key]
+            p.detach().zero_().add_(res.value)
     def loop_(self):
         while True:
             msg = self.comm_queue.get()
@@ -99,8 +111,13 @@ class Worker(Role):
                         # this msg has been completed
                         
                         Res=msg.get_response()
-                        self.key_res[Res.key]=Res
-                        self.paramkey_lock[Res.key].release()
+                        self.handle_res(Res)
+                    
+
+                        if self.strategy['consistency']=='ASP':
+                            pass
+                        else:
+                            self.paramkey_lock[Res.key].release()
                     else:
                         # if msg.key==12 and msg.type=="PullReqMsg":
                         #     print("Not Completed")
@@ -118,7 +135,10 @@ class Worker(Role):
         # print("begin to pull")
         for group in self.optimizer.param_groups:
             for p in group['params']:
-                self.paramkey_lock[self.param_key_map[p]].acquire()
+                if self.strategy['consistency']=='ASP':
+                    pass
+                else:
+                    self.paramkey_lock[self.param_key_map[p]].acquire()
                 # print("send pull req")
                 
                 req=PullReqMsg(key=self.param_key_map[p],version=0,src=self.util.world_rank,dst=self.param_rank_map[p],ctx=self)
