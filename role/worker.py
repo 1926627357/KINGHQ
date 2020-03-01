@@ -89,8 +89,19 @@ class Worker(Role):
         
     def handle_res(self,res):
         if res.type=='PullResMsg':
+            # pull task completes
             p=self.KVStore(res.key)[res.key]
             p.detach().zero_().add_(res.value)
+            
+            # release the lock when the task completes
+            self.paramkey_lock[res.key].release()
+        else:
+            # push task completes
+            if self.strategy['consistency']=='ASP':
+                pass
+            else:
+                self.paramkey_lock[res.key].release()
+
     def loop_(self):
         while True:
             msg = self.comm_queue.get()
@@ -103,10 +114,9 @@ class Worker(Role):
                     
                     if msg.is_completed():
                         # this msg has been completed
-                        
                         Res=msg.get_response()
                         self.handle_res(Res)
-                        self.paramkey_lock[Res.key].release()
+                        
                     else:
                         # if msg.key==12 and msg.type=="PullReqMsg":
                         #     print("Not Completed")
