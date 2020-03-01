@@ -139,7 +139,8 @@ class Worker(Role):
         for group in self.optimizer.param_groups:
             for p in group['params']:
                 if self.strategy['consistency']=='ASP':
-                    self.paramkey_lock[self.param_key_map[p]].acquire(True if self.clock%self.strategy['staleness']==0 else False)
+                    self.paramkey_lock[self.param_key_map[p]].acquire()
+                    # True if self.clock%self.strategy['staleness']==0 else False
                 else:
                     self.paramkey_lock[self.param_key_map[p]].acquire()
                 # print("send pull req")
