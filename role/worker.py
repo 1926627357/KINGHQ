@@ -132,6 +132,8 @@ class Worker(Role):
         # push->apply->pull
         self.clock+=1
         # print("begin to pull")
+        if self.strategy['consistency']=='ASP':
+            self.optimizer.step()
         for group in self.optimizer.param_groups:
             for p in group['params']:
                 

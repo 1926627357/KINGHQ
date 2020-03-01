@@ -2,7 +2,7 @@
 import sys
 sys.path.append('/home/haiqwa/Documents/')
 import KINGHQ
-from KINGHQ.models import mobilenetv2
+from KINGHQ.models import mobilenetv2,vgg
 from KINGHQ.utils.utils import Log,Bar,Dice
 import torch.nn.functional as F
 import torch
@@ -48,7 +48,7 @@ train_loader = torch.utils.data.DataLoader(
 
 
 
-model=mobilenetv2.MobileNetV2().to(device)
+model=vgg.vgg19().to(device)
 model.train()
 optimizer=torch.optim.SGD(model.parameters(), lr=0.002)
 
@@ -67,7 +67,7 @@ if rank==0:
     bar=Bar(total=len(train_loader)*10, description=' worker progress')
     log=Log(title='Single machine',\
             Axis_title=['iterations', 'time', 'accuracy'],\
-            path='/home/haiqwa/Documents/KINGHQ/log/BSP_w3.csv',\
+            path='/home/haiqwa/Documents/KINGHQ/log/ASP.csv',\
             step=21)
 Dice=Dice(6)
 iteration=0
@@ -115,10 +115,10 @@ for epoch in range(10):
         if rank==0:
             bar()
 
-# if rank==0:
-#     log.data_processing('interval', data=log.get_column_data('time'))
-#     log.data_processing('rolling_mean',data=log.get_column_data('accuracy'),cycle=12)
-#     log.write()
+if rank==0:
+    log.data_processing('interval', data=log.get_column_data('time'))
+    log.data_processing('rolling_mean',data=log.get_column_data('accuracy'),cycle=12)
+    log.write()
 
 
 
