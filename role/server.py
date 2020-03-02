@@ -16,7 +16,6 @@ class Server(Role):
         self.response_queue=queue.Queue()
         self.Inbox=threading.Thread(target=self.loop_Inbox)
         self.Outbox=threading.Thread(target=self.loop_Outbox)
-        self.worker_num=len(self.util.workers)
         
     def init(self):
         self.Inbox.start()
@@ -31,10 +30,9 @@ class Server(Role):
         for param, _ in self.param_key_map.items():
             param.grad=None
         self.paramkey_lock={key: threading.Lock() for key in self.my_param_keys}
-        
+        self.clock_vector={key:{rank:0 for rank in self.util.workers} for key in self.my_param_keys}
         if self.strategy['consistency']=="BSP":
             self.buffer={key:None for key in self.my_param_keys}
-            self.clock_vector={key:0 for key in self.my_param_keys}
 
     def register_KVStore(self):
         super().register_KVStore()
@@ -103,9 +101,9 @@ class Server(Role):
                     self.buffer[req.key].add_(req.value)
             elif op=="Average":
                 if self.buffer[req.key] is None:
-                    self.buffer[req.key]=req.value/self.worker_num
+                    self.buffer[req.key]=req.value/len(self.util.workers)
                 else:
-                    self.buffer[req.key].add_(req.value/self.worker_num)
+                    self.buffer[req.key].add_(req.value/len(self.util.workers))
         elif self.strategy['consistency']=="SSP":
             pass
 
@@ -115,7 +113,7 @@ class Server(Role):
             self.optimizer.step()
             self.KVStore(req.key)[req.key].grad=None
         elif self.strategy['consistency']=="BSP":
-            if self.clock_vector[req.key]%self.worker_num==0:
+            if max(self.clock_vector[req.key].values())==min(self.clock_vector[req.key].values()):
                 # apply when the server aggregate all the gradients from workers
                 self.KVStore(req.key)[req.key].grad=self.buffer[req.key]
                 self.optimizer.step()
@@ -127,11 +125,10 @@ class Server(Role):
         if self.strategy['consistency']=="ASP":
             return True
         elif self.strategy['consistency']=="BSP":
-            if self.clock_vector[req.key]%self.worker_num==0:
+            if self.clock_vector[req.key][req.src]==min(self.clock_vector[req.key].values()):
                 # when the requester run no more 0 step than the slowest one
                 return True
             else:
-                # print(self.clock_vector[req.key])
                 # print(self.clock_vector[req.key])
                 return False
                 
@@ -144,7 +141,7 @@ class Server(Role):
             if Req.type=="PushReqMsg":
                 # Res=ResMsg(msgtype="PushResMsg")
                 # self.response_queue.put(Res)
-                self.clock_vector[Req.key]+=1
+                self.clock_vector[Req.key][Req.src]+=1
                 self.aggregate(req=Req)
                 self.apply(req=Req)
                 # self.KVStore(Req.key)[Req.key].grad=Req.value
