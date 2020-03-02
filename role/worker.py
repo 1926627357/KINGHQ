@@ -16,7 +16,7 @@ class Worker(Role):
         self.comm_queue=queue.Queue()
         self.mailbox=threading.Thread(target=self.loop_)
         self.core=Core()
-        self.LOG=True
+        self.LOG=False
     def init(self):
         self.mailbox.start()
         self.param_rank_map=self.util.partition_model(self.optimizer)
