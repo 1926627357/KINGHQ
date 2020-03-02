@@ -119,6 +119,8 @@ class Worker(Role):
                     else:
                         # if msg.key==12 and msg.type=="PullReqMsg":
                         #     print("Not Completed")
+                        # if self.LOG:
+                        #     print(("I have not complete the "+msg.type+" of the key-%d    "%msg.key, time.time()))
                         self.comm_queue.put(msg)
             else:
                 break

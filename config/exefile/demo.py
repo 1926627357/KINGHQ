@@ -75,7 +75,7 @@ if rank==0:
     bar=Bar(total=len(train_loader)*EPOCH, description=' worker progress')
     log=Log(title='Single machine',\
             Axis_title=['iterations', 'time', 'accuracy'],\
-            path='/home/haiqwa/Documents/KINGHQ/log/BSP.csv',\
+            path='/home/haiqwa/Documents/KINGHQ/log/ASP.csv',\
             step=21)
 Dice=Dice(6)
 iteration=0
