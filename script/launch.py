@@ -120,8 +120,13 @@ for ip,s in local_size.items():
 # delete the last str
 MPI_COMMAND=MPI_COMMAND[:-1]
 
+ip_prefix=ip.split('.')
+ip_prefix[-1]='0'
+ip_prefix='.'.join(ip_prefix)
+ip_prefix=' -mca btl_tcp_if_include '+ip_prefix+'/24'
 
-MPI_COMMAND+=" /home/haiqwa/anaconda3/envs/pytorch/bin/python -B "+"/home/haiqwa/Documents/KINGHQ/config/exefile/"+args.input.split('/')[-1]
 
-print(MPI_COMMAND)
-# print(excuteCommand(MPI_COMMAND))
+MPI_COMMAND+=ip_prefix+" /home/haiqwa/anaconda3/envs/pytorch/bin/python -B "+"/home/haiqwa/Documents/KINGHQ/config/exefile/"+args.input.split('/')[-1]
+
+# print(MPI_COMMAND)
+print(excuteCommand(MPI_COMMAND))

@@ -70,7 +70,7 @@ optimizer=KINGHQ.KINGHQ_Optimizer(optimizer,model,{"consistency": "BSP"})
 # print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH")
 
 import time
-EPOCH=200
+EPOCH=80
 if rank==0:
     bar=Bar(total=len(train_loader)*EPOCH, description=' worker progress')
     log=Log(title='Single machine',\
