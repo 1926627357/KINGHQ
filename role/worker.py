@@ -16,7 +16,7 @@ class Worker(Role):
         self.comm_queue=queue.Queue()
         self.mailbox=threading.Thread(target=self.loop_)
         self.core=Core()
-        self.LOG=False
+        self.LOG=True
     def init(self):
         self.mailbox.start()
         self.param_rank_map=self.util.partition_model(self.optimizer)
@@ -114,7 +114,7 @@ class Worker(Role):
                         Res=msg.get_response()
                         self.handle_res(Res)
                         if self.LOG:
-                            print("I complete the "+msg.type+" of the key%d    "%msg.type, time.time())
+                            print("I complete the "+msg.type+" of the key-%d    "%msg.key, time.time())
                         
                     else:
                         # if msg.key==12 and msg.type=="PullReqMsg":
@@ -130,7 +130,7 @@ class Worker(Role):
         # do jobs as the flow chart designs
         # push->apply->pull
         self.clock+=1
-        # print("begin to pull")
+        print("begin to pull")
         self.optimizer.step()
         for group in self.optimizer.param_groups:
             for p in group['params']:
