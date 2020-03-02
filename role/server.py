@@ -125,6 +125,7 @@ class Server(Role):
         if self.strategy['consistency']=="ASP":
             return True
         elif self.strategy['consistency']=="BSP":
+            
             if self.clock_vector[req.key][req.src]==min(self.clock_vector[req.key].values()):
                 # when the requester run no more 0 step than the slowest one
                 return True
@@ -142,11 +143,12 @@ class Server(Role):
                 # Res=ResMsg(msgtype="PushResMsg")
                 # self.response_queue.put(Res)
                 self.clock_vector[Req.key][Req.src]+=1
-                # self.aggregate(req=Req)
-                # self.apply(req=Req)
-                self.KVStore(Req.key)[Req.key].grad=Req.value
-                self.optimizer.step()
-                self.KVStore(Req.key)[Req.key].grad=None
+                
+                self.aggregate(req=Req)
+                self.apply(req=Req)
+                # self.KVStore(Req.key)[Req.key].grad=Req.value
+                # self.optimizer.step()
+                # self.KVStore(Req.key)[Req.key].grad=None
             elif Req.type=="PullReqMsg":
                 # value=self.KVStore(Req.key)[Req.key].detach().clone()
                 # Res=ResMsg(msgtype="PullResMsg",key=Req.key,value=value,src=Req.dst,dst=Req.src)
