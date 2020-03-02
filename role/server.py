@@ -143,7 +143,7 @@ class Server(Role):
                 # Res=ResMsg(msgtype="PushResMsg")
                 # self.response_queue.put(Res)
                 self.clock_vector[Req.key][Req.src]+=1
-                print(self.clock_vector[self.my_param_keys[0]])
+                
                 self.aggregate(req=Req)
                 self.apply(req=Req)
                 # self.KVStore(Req.key)[Req.key].grad=Req.value
