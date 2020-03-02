@@ -130,7 +130,7 @@ class Worker(Role):
         # do jobs as the flow chart designs
         # push->apply->pull
         self.clock+=1
-        print("begin to pull")
+        # print("begin to pull")
         self.optimizer.step()
         for group in self.optimizer.param_groups:
             for p in group['params']:
