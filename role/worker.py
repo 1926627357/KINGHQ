@@ -5,6 +5,7 @@ import queue
 import threading
 from KINGHQ.core.core import Core
 from KINGHQ.msg.msg import PushReqMsg,PushResMsg,PullReqMsg,PullResMsg
+import time
 class Worker(Role):
     def __init__(self, util, optimizer, model, strategy):
         self.strategy= strategy
@@ -14,22 +15,17 @@ class Worker(Role):
         super().__init__(util.get_KVStore())
         self.comm_queue=queue.Queue()
         self.mailbox=threading.Thread(target=self.loop_)
-        
         self.core=Core()
+        self.LOG=False
     def init(self):
-        
         self.mailbox.start()
-        
         self.param_rank_map=self.util.partition_model(self.optimizer)
         # print(self.param_rank_map)
         self.register_KVStore()
-        
         self.paramkey_lock={key: threading.Lock() for _,key in self.param_key_map.items()}
-
         # register the backward and forward hook function
         self.register_bhook()
         self.register_fhook()
-
 
     def b_hook(self, p):
         def hook(* ignore):
@@ -38,7 +34,8 @@ class Worker(Role):
                 pass
             else:
                 self.paramkey_lock[self.param_key_map[p]].acquire()
-            
+            if self.LOG:
+                print("now I begin to send the key-{} to the server-{}  ".format(self.param_key_map[p],self.param_rank_map[p]),time.time())
             msg=PushReqMsg(key=self.param_key_map[p],value=p.grad,src=self.util.world_rank,dst=self.param_rank_map[p],ctx=self)
             # print(self.param_key_map[p])
             # print(self.util.world_rank)
@@ -116,6 +113,8 @@ class Worker(Role):
                         # this msg has been completed
                         Res=msg.get_response()
                         self.handle_res(Res)
+                        if self.LOG:
+                            print("I complete the "+msg.type+" of the key%d    "%msg.type, time.time())
                         
                     else:
                         # if msg.key==12 and msg.type=="PullReqMsg":
@@ -137,6 +136,8 @@ class Worker(Role):
             for p in group['params']:
                 
                 self.paramkey_lock[self.param_key_map[p]].acquire()
+                if self.LOG:
+                    print("I begin to Pull the param of the key-%d   "%self.param_key_map[p], time.time())
                 # print("send pull req")
                 
                 req=PullReqMsg(key=self.param_key_map[p],version=0,src=self.util.world_rank,dst=self.param_rank_map[p],ctx=self)

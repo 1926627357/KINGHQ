@@ -4,10 +4,14 @@ from KINGHQ.role import Role
 import threading
 import queue
 from KINGHQ.msg.msg import ReqMsg,ResMsg
+import time
+
+
 class Server(Role):
     def __init__(self, util, optimizer, strategy):
         # worker_rank: denote all workers' ranks in a format of list
         super().__init__(util.get_KVStore())
+        self.LOG=False
         self.strategy=strategy
         self.optimizer=optimizer
         self.util=util
@@ -74,6 +78,8 @@ class Server(Role):
                         
                     elif msg.status=="recv_value":
                         self.request_queue.put(msg)
+                        if self.LOG:
+                            print("I recv "+msg.type+"from the worker-%d"%msg.src, time.time())
                         msg=ReqMsg(src=msg.src,dst=self.util.world_rank,ctx=self)
             ReqMsg_queue.put(msg)
 
@@ -125,25 +131,24 @@ class Server(Role):
         if self.strategy['consistency']=="ASP":
             return True
         elif self.strategy['consistency']=="BSP":
-            
             if self.clock_vector[req.key][req.src]==min(self.clock_vector[req.key].values()):
                 # when the requester run no more 0 step than the slowest one
                 return True
             else:
-                # print(self.clock_vector[req.key])
                 return False
-                
         elif self.strategy['consistency']=="SSP":
             pass
+    
     def do_(self):
+        
         while True:
             Req=self.get_request()
-            # print(Req.type)
             if Req.type=="PushReqMsg":
                 # Res=ResMsg(msgtype="PushResMsg")
                 # self.response_queue.put(Res)
                 self.clock_vector[Req.key][Req.src]+=1
-                
+                if self.LOG:
+                    print("I get the Push request from the queue, which is from worker-%d:  "%Req.src,time.time())
                 self.aggregate(req=Req)
                 self.apply(req=Req)
                 # self.KVStore(Req.key)[Req.key].grad=Req.value
@@ -153,13 +158,15 @@ class Server(Role):
                 # value=self.KVStore(Req.key)[Req.key].detach().clone()
                 # Res=ResMsg(msgtype="PullResMsg",key=Req.key,value=value,src=Req.dst,dst=Req.src)
                 # self.response_queue.put(Res)
-                # print("I get a pull request")
+                if self.LOG:
+                    print("I recv the request from the queue, which comes from worker-%d:  "%Req.src,time.time())
                 if self.check(Req):
+                    if self.LOG:
+                        print("worker-%d can Pull the parameter:  "%Req.src,time.time())
                     value=self.KVStore(Req.key)[Req.key].detach().clone()
                     Res=ResMsg(msgtype="PullResMsg",key=Req.key,value=value,src=Req.dst,dst=Req.src)
                     self.response_queue.put(Res)
                 else:
-                    # print("But I can't send it now!")
                     self.request_queue.put(Req)
 
 if __name__ == "__main__":
