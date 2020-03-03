@@ -135,7 +135,7 @@ class Server(Role):
                 # when the requester run no more 0 step than the slowest one
                 return True
             else:
-                return True
+                return False
         elif self.strategy['consistency']=="SSP":
             pass
     

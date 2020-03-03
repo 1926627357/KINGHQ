@@ -2,7 +2,7 @@
 
 It's a graduation project of Haiquan Wang.
 
-##Background
+**Background**
 ---
 Nowadays, machine learning is getting more and more attention, including but not limited to
 computer vision and natural language process. However, machine learning is a time-costing 
@@ -24,13 +24,15 @@ response to various synchronization strategies, like ASP and SSP. And I try to f
 that can inspire us what synchronization strategy is the best for specified DNN model.
 
 
-##Synchronization 
----
 
 
+**Getting Started**
+Please build pytorch from the source.
+>./run.sh
+There is a simple launch command in ./run.sh. And usr can config the worker host and server host in ./config/host.
+for example, in server hostfile:
+>localhost
+>localhost
+And it will launch two servers in the localhost. 
 
 
-##Thanks
----
-https://www.shuijingwanwq.com/2017/11/06/2063/
-https://www.cnblogs.com/yueyue-love/p/6378767.html
