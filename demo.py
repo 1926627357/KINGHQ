@@ -26,25 +26,25 @@ size=KINGHQ.size()
 # print(rank)
 # # '~/Documents/pytorch_project/dataset/MNIST'
 
-train_dataset = \
-    datasets.MNIST('~/Documents/.datasets/MNIST'+'data-%d' % KINGHQ.rank(), train=True, download=True,
-                   transform=transforms.Compose([
-                       transforms.ToTensor(),
-                       transforms.Normalize((0.1307,), (0.3081,))
-                   ]))
 # train_dataset = \
-#     datasets.CIFAR100('~/Documents/.datasets/CIFAR100'+'data-%d' % KINGHQ.rank(), train=True, download=True,
-#                         transform=transforms.Compose([
-#                                         transforms.RandomCrop(32, padding=4),
-#                                         transforms.RandomHorizontalFlip(),
-#                                         transforms.RandomRotation(15),
-#                                         transforms.ToTensor(),
-#                                         transforms.Normalize(
-#                                             (0.5070751592371323, 0.48654887331495095, 0.4409178433670343), 
-#                                             (0.2673342858792401, 0.2564384629170883, 0.27615047132568404)
-#                                             )
-#                                     ])
-#                    )
+#     datasets.MNIST('~/Documents/.datasets/MNIST'+'data-%d' % KINGHQ.rank(), train=True, download=True,
+#                    transform=transforms.Compose([
+#                        transforms.ToTensor(),
+#                        transforms.Normalize((0.1307,), (0.3081,))
+#                    ]))
+train_dataset = \
+    datasets.CIFAR10('~/Documents/.datasets/CIFAR10'+'data-%d' % KINGHQ.rank(), train=True, download=True,
+                        transform=transforms.Compose([
+                                        transforms.RandomCrop(32, padding=4),
+                                        transforms.RandomHorizontalFlip(),
+                                        transforms.RandomRotation(15),
+                                        transforms.ToTensor(),
+                                        transforms.Normalize(
+                                            (0.5070751592371323, 0.48654887331495095, 0.4409178433670343), 
+                                            (0.2673342858792401, 0.2564384629170883, 0.27615047132568404)
+                                            )
+                                    ])
+                   )
 
 # # Horovod: use DistributedSampler to partition the training data.
 train_sampler = torch.utils.data.distributed.DistributedSampler(
@@ -54,7 +54,7 @@ train_loader = torch.utils.data.DataLoader(
 
 
 
-model=lenet.LeNet5().to(device)
+model=vgg.vgg13().to(device)
 # model.train()
 optimizer=torch.optim.SGD(model.parameters(), lr=0.002)
 
@@ -66,16 +66,16 @@ optimizer=torch.optim.SGD(model.parameters(), lr=0.002)
 loss_function = nn.CrossEntropyLoss()
 
 
-optimizer=KINGHQ.KINGHQ_Optimizer(optimizer,model,{"consistency": "ASP"})
+optimizer=KINGHQ.KINGHQ_Optimizer(optimizer,model,{"consistency": "BSP"})
 # print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH")
 
 import time
-EPOCH=10
+EPOCH=60
 if rank==0:
     bar=Bar(total=len(train_loader)*EPOCH, description=' worker progress')
     log=Log(title='Single machine',\
             Axis_title=['iterations', 'time', 'accuracy'],\
-            path='/home/haiqwa/Documents/KINGHQ/log/ASP.csv',\
+            path='/home/haiqwa/Documents/KINGHQ/log/BSP.csv',\
             step=21)
 Dice=Dice(6)
 iteration=0
