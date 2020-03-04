@@ -13,7 +13,7 @@ import horovod.torch as hvd
 
 import time
 
-CUDA=False
+CUDA=True
 
 hvd.init()
 #hvd.size(), hvd.local_rank(), hvd.rank()
@@ -24,11 +24,18 @@ device=torch.device('cuda:{}'.format(hvd.local_rank()) if CUDA else 'cpu')
 
 kwargs = {'num_workers': 1, 'pin_memory': True} if CUDA else {}
 train_dataset = \
-    datasets.MNIST('~/Documents/pytorch_project/dataset/MNIST'+'data-%d' % hvd.rank(), train=True, download=True,
-                   transform=transforms.Compose([
-                       transforms.ToTensor(),
-                       transforms.Normalize((0.1307,), (0.3081,))
-                   ]))
+    datasets.CIFAR100('~/Documents/.datasets/CIFAR100'+'data-%d' % hvd.rank(), train=True, download=True,
+                        transform=transforms.Compose([
+                                        transforms.RandomCrop(32, padding=4),
+                                        transforms.RandomHorizontalFlip(),
+                                        transforms.RandomRotation(15),
+                                        transforms.ToTensor(),
+                                        transforms.Normalize(
+                                            (0.5070751592371323, 0.48654887331495095, 0.4409178433670343), 
+                                            (0.2673342858792401, 0.2564384629170883, 0.27615047132568404)
+                                            )
+                                    ])
+                   )
 
 # Horovod: use DistributedSampler to partition the training data.
 train_sampler = torch.utils.data.distributed.DistributedSampler(
@@ -36,15 +43,10 @@ train_sampler = torch.utils.data.distributed.DistributedSampler(
 train_loader = torch.utils.data.DataLoader(
     train_dataset, batch_size=16, sampler=train_sampler, **kwargs)
 
-model=lenet.LeNet5().to(device)
+model=vgg.vgg13().to(device)
 model.train()
 # lr_scaler=hvd.size()
 optimizer = optim.SGD(model.parameters(), lr=0.002)
-
-
-check_point=torch.load('/home/v-haiqwa/Documents/KINGHQ/model_state/Lenet')
-model.load_state_dict(check_point['state_dict'])
-optimizer.load_state_dict(check_point['optimizer'])
 optimizer = hvd.DistributedOptimizer(optimizer,
                                      named_parameters=model.named_parameters())
 loss_function = nn.CrossEntropyLoss()
@@ -53,7 +55,7 @@ if rank==0:
     bar=Bar(total=len(train_loader)*10, description=' worker progress')
     log=Log(title='horovod benchmark',\
             Axis_title=['iterations', 'time', 'accuracy'],\
-            path='/home/v-haiqwa/Documents/KINGHQ/log/hvd_w1.csv',\
+            path='/home/haiqwa/Documents/KINGHQ/log/hvd_w1.csv',\
             step=21)
 iteration=0
 for epoch in range(10):
@@ -72,13 +74,8 @@ for epoch in range(10):
         loss = loss_function(output, target)
         loss.backward()
         optimizer.step()
-        
-
-
         if rank==0:
             bar()
-        break
-    break
             
 
 if CUDA:
