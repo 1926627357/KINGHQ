@@ -90,6 +90,19 @@ python setup.py install
 "if" failed to install, you could add this line to the ~/.bashrc:
 export PYTHONPATH="/home/haiqwa/Download/vision/build/lib.linux-x86_64-3.6/:$PYTHONPATH"
 
+horovod install
+python -m pip uninstall -y torchvision torch
+conda install pytorch torchvision cudatoolkit=10.1 -c pytorch
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/nccl_2.4.2/lib
+export HOROVOD_NCCL_HOME=/usr/local/nccl_2.4.2
+export HOROVOD_GPU_ALLREDUCE=NCCL
+export HOROVOD_GPU_BROADCAST=NCCL
+export HOROVOD_WITHOUT_MXNET=1
+export HOROVOD_WITHOUT_TENSORFLOW=1
+python -m pip install --no-cache-dir horovod
+
+pip uninstall -y horovod
+
 login without password
 ssh-keygen -t rsa
 ssh-copy-id -i ~/.ssh/id_rsa.pub <romte_ip>

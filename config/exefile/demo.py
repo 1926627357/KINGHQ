@@ -66,16 +66,16 @@ optimizer=torch.optim.SGD(model.parameters(), lr=0.002)
 loss_function = nn.CrossEntropyLoss()
 
 
-optimizer=KINGHQ.KINGHQ_Optimizer(optimizer,model,{"consistency": "BSP"})
+optimizer=KINGHQ.KINGHQ_Optimizer(optimizer,model,{"consistency": "ASP"})
 # print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH")
 
 import time
-EPOCH=60
+EPOCH=10
 if rank==0:
     bar=Bar(total=len(train_loader)*EPOCH, description=' worker progress')
     log=Log(title='Single machine',\
             Axis_title=['iterations', 'time', 'accuracy'],\
-            path='/home/haiqwa/Documents/KINGHQ/log/BSP.csv',\
+            path='/home/haiqwa/Documents/KINGHQ/log/ASP.csv',\
             step=21)
 Dice=Dice(6)
 iteration=0
