@@ -61,7 +61,7 @@ train_dataset = \
 #         train_dataset, num_replicas=KINGHQ.size(), rank=KINGHQ.rank(),shuffle=True)
 train_sampler = DistSampler(train_dataset,num_replicas=KINGHQ.size(),rank=KINGHQ.rank(),shuffle=True,total_epoch=EPOCH)
 train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=128, sampler=train_sampler, **kwargs)
+        train_dataset, batch_size=128, sampler=train_sampler, drop_last=True, **kwargs)
 
 
 

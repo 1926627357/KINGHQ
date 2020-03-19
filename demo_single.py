@@ -44,7 +44,7 @@ train_dataset = \
 # train_sampler = torch.utils.data.distributed.DistributedSampler(
 #     train_dataset, num_replicas=1, rank=0, shuffle=True)
 EPOCH=10
-train_sampler = DistSampler(train_dataset,num_replicas=1,rank=0,shuffle=True,total_epoch=EPOCH)
+train_sampler = DistSampler(train_dataset,num_replicas=9,rank=0,shuffle=True,total_epoch=EPOCH)
 train_loader = torch.utils.data.DataLoader(
     train_dataset, batch_size=128, sampler=train_sampler, **kwargs)
 
@@ -73,7 +73,7 @@ if rank==0:
             step=21)
 Dice=Dice(6)
 iteration=0
-for epoch in range(EPOCH):
+for epoch in range(1):
     # train_sampler.set_epoch(epoch)
     for batch_idx, (data, target) in enumerate(train_loader):
         if CUDA:
