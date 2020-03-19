@@ -133,7 +133,7 @@ class Server(Role):
         if self.strategy['consistency']=="ASP":
             return True
         elif self.strategy['consistency']=="BSP":
-            if self.clock_vector[req.key][req.src]==self.global_clock[req.key]:
+            if self.clock_vector[req.key][req.src] == self.global_clock[req.key]:
                 # when the requester run no more 0 step than the slowest one
                 return True
             else:
@@ -166,11 +166,7 @@ class Server(Role):
                     while not self.pending_queue.empty():
                         Req=self.pending_queue.get()
                         if self.check(Req):
-                            if self.LOG:
-                                print("worker-%d can Pull the parameter:  "%Req.src,time.time())
-                            value=self.KVStore(Req.key)[Req.key].detach().clone()
-                            Res=ResMsg(msgtype="PullResMsg",key=Req.key,value=value,src=Req.dst,dst=Req.src)
-                            self.response_queue.put(Res)
+                            self.request_queue.put(Req)
                         else:
                             self.pending_queue.put(Req)
                             break

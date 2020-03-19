@@ -54,7 +54,7 @@ train_loader = torch.utils.data.DataLoader(
 
 
 
-model=vgg.vgg13().to(device)
+model=vgg.vgg19().to(device)
 # model.train()
 optimizer=torch.optim.SGD(model.parameters(), lr=0.002)
 
@@ -104,6 +104,8 @@ for epoch in range(EPOCH):
         #     print("computing:%d"%(time.time()-start_time))
 
         # start_time=time.time()
+        if rank==2:
+            time.sleep(5)
         
         
             
