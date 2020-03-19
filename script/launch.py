@@ -128,5 +128,5 @@ ip_prefix=' -mca btl_tcp_if_include '+ip_prefix+'/24'
 
 MPI_COMMAND+=ip_prefix+" /home/haiqwa/anaconda3/envs/pytorch/bin/python -B "+"/home/haiqwa/Documents/KINGHQ/config/exefile/"+args.input.split('/')[-1]
 
-# print(MPI_COMMAND)
-print(excuteCommand(MPI_COMMAND))
+print(MPI_COMMAND)
+# print(excuteCommand(MPI_COMMAND))

@@ -133,7 +133,7 @@ class Server(Role):
         if self.strategy['consistency']=="ASP":
             return True
         elif self.strategy['consistency']=="BSP":
-            if self.clock_vector[req.key][req.src]==self.global_clock[req.key]:
+            if self.clock_vector[req.key][req.src]-1<=self.global_clock[req.key]:
                 # when the requester run no more 0 step than the slowest one
                 return True
             else:
