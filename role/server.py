@@ -35,6 +35,8 @@ class Server(Role):
             param.grad=None
         self.paramkey_lock={key: threading.Lock() for key in self.my_param_keys}
         self.clock_vector={key:{rank:0 for rank in self.util.workers} for key in self.my_param_keys}
+        self.global_clock={key:0 for key in self.my_param_keys}
+
         if self.strategy['consistency']=="BSP":
             self.buffer={key:None for key in self.my_param_keys}
 
@@ -119,7 +121,7 @@ class Server(Role):
             self.optimizer.step()
             self.KVStore(req.key)[req.key].grad=None
         elif self.strategy['consistency']=="BSP":
-            if max(self.clock_vector[req.key].values())==min(self.clock_vector[req.key].values()):
+            if max(self.clock_vector[req.key].values())==self.global_clock[req.key]:
                 # apply when the server aggregate all the gradients from workers
                 self.KVStore(req.key)[req.key].grad=self.buffer[req.key]
                 self.optimizer.step()
@@ -131,7 +133,7 @@ class Server(Role):
         if self.strategy['consistency']=="ASP":
             return True
         elif self.strategy['consistency']=="BSP":
-            if self.clock_vector[req.key][req.src]==min(self.clock_vector[req.key].values()):
+            if self.clock_vector[req.key][req.src]==self.global_clock[req.key]:
                 # when the requester run no more 0 step than the slowest one
                 return True
             else:
@@ -147,6 +149,7 @@ class Server(Role):
                 # Res=ResMsg(msgtype="PushResMsg")
                 # self.response_queue.put(Res)
                 self.clock_vector[Req.key][Req.src]+=1
+                self.global_clock[Req.key]=min(self.clock_vector[Req.key].values())
                 if self.LOG:
                     print("I get the Push request from the queue, which is from worker-%d:  "%Req.src,time.time())
                 self.aggregate(req=Req)
