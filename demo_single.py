@@ -18,7 +18,7 @@ import torchvision.transforms as transforms
 # KINGHQ.init()
 CUDA=True
 device = torch.device('cuda:{}'.format(0) if CUDA else 'cpu')
-kwargs = {'num_workers': 1, 'pin_memory': True} if CUDA else {}
+kwargs = {'pin_memory': True} if CUDA else {}
 # # In fact the rank is the worker rank
 # # the size is the worker size
 # rank=KINGHQ.rank()
@@ -27,7 +27,7 @@ kwargs = {'num_workers': 1, 'pin_memory': True} if CUDA else {}
 # # '~/Documents/pytorch_project/dataset/MNIST'
 
 train_dataset = \
-    datasets.CIFAR100('~/Documents/.datasets/CIFAR100'+'data-%d' % 0, train=True, download=True,
+    datasets.CIFAR10('~/Documents/.datasets/CIFAR10'+'data-%d' % 0, train=True, download=True,
                         transform=transforms.Compose([
                                         transforms.RandomCrop(32, padding=4),
                                         transforms.RandomHorizontalFlip(),

@@ -7,6 +7,7 @@
 #   CSV: handle .csv file
 #   Figure: draw experiment figure
 #   Dice: generate a random number
+#   DistSampler: the Sampler to generate the data for DML
 
 from KINGHQ.utils.KVStore import KVStore
 from KINGHQ.msg.msg import RoExReqMsg,RoExResMsg
@@ -306,5 +307,37 @@ class Dice(object):
     def __call__(self):
         return random.randint(1,self.side)
 
+from torch.utils.data.sampler import Sampler
+class DistSampler(Sampler):
+    def __init__(self, dataset, num_replicas=None, rank=None, shuffle=True, total_epoch=1, start_epoch=0):
+        self.dataset = dataset
+        self.num_replicas = num_replicas
+        self.rank = rank
+        self.shuffle=shuffle
+        self.total_epoch=total_epoch
+        self.start_epoch=start_epoch
+        self.num_samples = int(math.ceil(len(self.dataset) * 1.0 / self.num_replicas))
+        self.total_size = self.num_samples * self.num_replicas * (total_epoch-start_epoch)
+    def __len__(self):
+        return self.num_samples * (total_epoch-start_epoch)
     
-    
+    def set_start_epoch(self, setting):
+        self.start_epoch=setting
+
+    def __iter__(self):
+        if self.shuffle:
+            g = torch.Generator()
+            g.manual_seed(self.start_epoch)
+            indices = torch.randperm(len(self.dataset), generator=g).tolist()
+            for epoch in range(self.start_epoch+1,self.total_epoch):
+                indices+=torch.randperm(len(self.dataset), generator=g).tolist()[:]
+        else:
+            indices = list(range(len(self.dataset)))
+            indices += indices[:(self.num_samples * self.num_replicas - len(indices))]
+            for epoch in range(self.start_epoch+1,self.total_epoch):
+                indices+=indices[:]
+        indices = indices[self.rank:self.total_size:self.num_replicas]
+        return iter(indices)
+
+
+
