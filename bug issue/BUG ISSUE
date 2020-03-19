@@ -56,6 +56,7 @@ meeting:
 conda create --name pytorch python=3.6
 需要的依赖库（持续补充）：
 conda install pandas json5 tqdm matplotlib
+python -m pip install gluoncv
 
 anaconda 
 conda create --name pytorch python=3.6
@@ -63,7 +64,7 @@ conda remove -n pytorch --all
 
 pytorch install:
 conda install numpy ninja pyyaml mkl mkl-include setuptools cmake cffi
-conda install -c pytorch magma-cuda100
+conda install -c pytorch magma-cuda101
 git clone --recursive https://github.com/pytorch/pytorch
 cd pytorch
 # if you are updating an existing checkout
@@ -77,6 +78,9 @@ python setup.py clean
 #export CUDNN_LIBRARY=libcudnn.so
 #export CPLUS_INCLUDE_PATH=/home/haiqwa/Documents/cuda/include:$CPLUS_INCLUDE_PATH C_INCLUDE_PATH=/home/haiqwa/Documents/cuda/include:$C_INCLUDE_PATH
 #export LIBRARY_PATH=/home/haiqwa/Documents/cuda/lib64:$LIBRARY_PATH
+
+
+
 export USE_NINJA=OFF
 export CMAKE_PREFIX_PATH=${CONDA_PREFIX:-"$(dirname $(which conda))/../"}
 python setup.py install
@@ -92,13 +96,16 @@ export PYTHONPATH="/home/haiqwa/Download/vision/build/lib.linux-x86_64-3.6/:$PYT
 
 horovod install
 python -m pip uninstall -y torchvision torch
-conda install pytorch torchvision cudatoolkit=10.1 -c pytorch
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/nccl_2.4.2/lib
 export HOROVOD_NCCL_HOME=/usr/local/nccl_2.4.2
+export HOROVOD_NCCL_INCLUDE=/usr/include
+export HOROVOD_NCCL_LIB=/usr/lib64
+
 export HOROVOD_GPU_ALLREDUCE=NCCL
 export HOROVOD_GPU_BROADCAST=NCCL
 export HOROVOD_WITHOUT_MXNET=1
 export HOROVOD_WITHOUT_TENSORFLOW=1
+export HOROVOD_WITH_PYTORCH=1
 python -m pip install --no-cache-dir horovod
 
 pip uninstall -y horovod
@@ -109,3 +116,33 @@ ssh-copy-id -i ~/.ssh/id_rsa.pub <romte_ip>
 
 03/01/2020
 vgg需要model.train(),mobilenet不需要！
+
+
+
+openblas install
+git clone https://github.com/xianyi/OpenBLAS.git
+please make sure your gcc and gfortran are in the same version
+gcc --version
+gfortran --version
+if it still doesn't work, please add the path of libgfortran.so and libgfortran.so.3
+to your LD_LIBRARY_PATH and LIBRARY_PATH!
+
+make
+make install PREFIX=/home/haiqwa/Documents/openblas/
+
+mxnet install
+conda create --name mx python=3.6
+git clone --recursive https://github.com/apache/incubator-mxnet
+cd mxnet
+git submodule init
+git submodule update
+export CPLUS_INCLUDE_PATH=/home/haiqwa/Documents/openblas/include:$CPLUS_INCLUDE_PATH
+export C_INCLUDE_PATH=/home/haiqwa/Documents/openblas/include:$C_INCLUDE_PATH
+scp haiqwa@gpu9:/home/haiqwa/Download/incubator-mxnet/config.mk /home/haiqwa/Download/incubator-mxnet/config.mk
+cd python
+python setup.py install
+
+
+zps install
+git clone https://github.com/orhun/zps.git
+error: cmake is not the latest one
