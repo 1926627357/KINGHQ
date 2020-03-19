@@ -54,7 +54,7 @@ train_loader = torch.utils.data.DataLoader(
 
 
 
-model=vgg.vgg13().to(device)
+model=vgg.vgg19().to(device)
 # model.train()
 optimizer=torch.optim.SGD(model.parameters(), lr=0.002)
 
