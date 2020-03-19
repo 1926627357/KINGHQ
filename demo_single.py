@@ -3,7 +3,7 @@ import sys
 sys.path.append('/home/haiqwa/Documents/')
 import KINGHQ
 from KINGHQ.models import mobilenetv2,vgg
-from KINGHQ.utils.utils import Log,Bar,Dice
+from KINGHQ.utils.utils import Log,Bar,Dice,DistSampler
 import torch.nn.functional as F
 import torch
 import torch.nn as nn
@@ -41,8 +41,10 @@ train_dataset = \
                    )
 
 # # Horovod: use DistributedSampler to partition the training data.
-train_sampler = torch.utils.data.distributed.DistributedSampler(
-    train_dataset, num_replicas=1, rank=0, shuffle=True)
+# train_sampler = torch.utils.data.distributed.DistributedSampler(
+#     train_dataset, num_replicas=1, rank=0, shuffle=True)
+EPOCH=10
+train_sampler = DistSampler(train_dataset,num_replicas=1,rank=0,shuffle=True,total_epoch=EPOCH)
 train_loader = torch.utils.data.DataLoader(
     train_dataset, batch_size=128, sampler=train_sampler, **kwargs)
 
@@ -64,15 +66,15 @@ loss_function = nn.CrossEntropyLoss()
 import time
 rank=0
 if rank==0:
-    bar=Bar(total=len(train_loader)*10, description=' worker progress')
+    bar=Bar(total=len(train_loader), description=' worker progress')
     log=Log(title='Single machine',\
             Axis_title=['iterations', 'time', 'accuracy'],\
             path='/home/haiqwa/Documents/KINGHQ/log/ASP.csv',\
             step=21)
 Dice=Dice(6)
 iteration=0
-for epoch in range(10):
-    train_sampler.set_epoch(epoch)
+for epoch in range(EPOCH):
+    # train_sampler.set_epoch(epoch)
     for batch_idx, (data, target) in enumerate(train_loader):
         if CUDA:
             data, target = data.to(device), target.to(device)

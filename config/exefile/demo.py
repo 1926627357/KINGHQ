@@ -3,7 +3,7 @@ import sys
 sys.path.append('/home/haiqwa/Documents/')
 import KINGHQ
 from KINGHQ.models import vgg,lenet,mobilenetv2
-from KINGHQ.utils.utils import Log,Bar,Dice
+from KINGHQ.utils.utils import Log,Bar,Dice,DistSampler
 import torch.nn.functional as F
 import torch
 import torch.nn as nn
@@ -17,14 +17,13 @@ import torchvision.transforms as transforms
 
 KINGHQ.init()
 CUDA=True
+EPOCH=10
 device = torch.device('cuda:{}'.format(KINGHQ.local_rank()) if CUDA else 'cpu')
 kwargs = {'pin_memory': True,'num_workers': 2} if CUDA else {}
 # # In fact the rank is the worker rank
 # # the size is the worker size
 rank=KINGHQ.rank()
 size=KINGHQ.size()
-# print(rank)
-# # '~/Documents/pytorch_project/dataset/MNIST'
 
 model=mobilenetv2.MobileNetV2().to(device)
 # model.train()
@@ -57,16 +56,16 @@ train_dataset = \
                                             )
                                     ])
                    )
-    # # Horovod: use DistributedSampler to partition the training data.
-train_sampler = torch.utils.data.distributed.DistributedSampler(
-        train_dataset, num_replicas=KINGHQ.size(), rank=KINGHQ.rank(),shuffle=True)
+# # Horovod: use DistributedSampler to partition the training data.
+# train_sampler = torch.utils.data.distributed.DistributedSampler(
+#         train_dataset, num_replicas=KINGHQ.size(), rank=KINGHQ.rank(),shuffle=True)
+train_sampler = DistSampler(train_dataset,num_replicas=KINGHQ.size(),rank=KINGHQ.rank(),shuffle=True,total_epoch=EPOCH)
 train_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=128, sampler=train_sampler, **kwargs)
 
 
 
 import time
-EPOCH=10
 if rank==0:
     bar=Bar(total=len(train_loader)*EPOCH, description=' worker progress')
     log=Log(title='Single machine',\
@@ -76,7 +75,7 @@ if rank==0:
 Dice=Dice(6)
 iteration=0
 for epoch in range(EPOCH):
-    train_sampler.set_epoch(epoch)
+    # train_sampler.set_epoch(epoch)
     # train_dataset = \
     # datasets.CIFAR10('~/Documents/.datasets/CIFAR10'+'data-%d' % KINGHQ.rank(), train=True, download=True,
     #                     transform=transforms.Compose([
@@ -93,8 +92,8 @@ for epoch in range(EPOCH):
     # # # Horovod: use DistributedSampler to partition the training data.
     # train_sampler = torch.utils.data.distributed.DistributedSampler(
     #     train_dataset, num_replicas=KINGHQ.size(), rank=KINGHQ.rank())
-    train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=128, sampler=train_sampler, **kwargs)
+    # train_loader = torch.utils.data.DataLoader(
+    #     train_dataset, batch_size=128, sampler=train_sampler, **kwargs)
 
     
     for batch_idx, (data, target) in enumerate(train_loader):

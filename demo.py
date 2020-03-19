@@ -75,7 +75,7 @@ if rank==0:
 Dice=Dice(6)
 iteration=0
 for epoch in range(EPOCH):
-    train_sampler.set_epoch(epoch)
+    # train_sampler.set_epoch(epoch)
     # train_dataset = \
     # datasets.CIFAR10('~/Documents/.datasets/CIFAR10'+'data-%d' % KINGHQ.rank(), train=True, download=True,
     #                     transform=transforms.Compose([

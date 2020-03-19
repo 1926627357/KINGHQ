@@ -308,6 +308,7 @@ class Dice(object):
         return random.randint(1,self.side)
 
 from torch.utils.data.sampler import Sampler
+import math
 class DistSampler(Sampler):
     def __init__(self, dataset, num_replicas=None, rank=None, shuffle=True, total_epoch=1, start_epoch=0):
         self.dataset = dataset
@@ -319,7 +320,7 @@ class DistSampler(Sampler):
         self.num_samples = int(math.ceil(len(self.dataset) * 1.0 / self.num_replicas))
         self.total_size = self.num_samples * self.num_replicas * (total_epoch-start_epoch)
     def __len__(self):
-        return self.num_samples * (total_epoch-start_epoch)
+        return self.num_samples * (self.total_epoch-self.start_epoch)
     
     def set_start_epoch(self, setting):
         self.start_epoch=setting
