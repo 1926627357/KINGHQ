@@ -330,12 +330,13 @@ class DistSampler(Sampler):
             g = torch.Generator()
             g.manual_seed(self.start_epoch)
             indices = torch.randperm(len(self.dataset), generator=g).tolist()
-            for epoch in range(self.start_epoch+1,self.total_epoch):
+            indices += indices[:(self.num_samples * self.num_replicas - len(indices))]
+            for _ in range(self.start_epoch+1,self.total_epoch):
                 indices+=torch.randperm(len(self.dataset), generator=g).tolist()[:]
         else:
             indices = list(range(len(self.dataset)))
             indices += indices[:(self.num_samples * self.num_replicas - len(indices))]
-            for epoch in range(self.start_epoch+1,self.total_epoch):
+            for _ in range(self.start_epoch+1,self.total_epoch):
                 indices+=indices[:]
         indices = indices[self.rank:self.total_size:self.num_replicas]
         return iter(indices)

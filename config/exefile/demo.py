@@ -67,7 +67,7 @@ train_loader = torch.utils.data.DataLoader(
 
 import time
 if rank==0:
-    bar=Bar(total=len(train_loader)*EPOCH, description=' worker progress')
+    bar=Bar(total=len(train_loader), description=' worker progress')
     log=Log(title='Single machine',\
             Axis_title=['iterations', 'time', 'accuracy'],\
             path='/home/haiqwa/Documents/KINGHQ/log/BSP.csv',\
