@@ -99,28 +99,12 @@ for epoch in range(EPOCH):
         
         loss.backward()
         
-        # time.sleep(5)
-        # if rank==0:
-        #     print("computing:%d"%(time.time()-start_time))
-
-        # start_time=time.time()
-        if rank==2:
-            time.sleep(5)
         
+        # if rank==2:
+        #     time.sleep(5)
         
-            
-            # for group in optimizer.param_groups:
-            #     for p in group['params']:
-            #         p.grad/=4
-        
-        # time.sleep(0.005*Dice()-0.002)
         
         optimizer.step()
-        
-        
-        # if rank==0:
-        #     print("communication:%d"%(time.time()-start_time))
-
         
         if rank==0:
             bar()
