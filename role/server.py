@@ -166,7 +166,11 @@ class Server(Role):
                     while not self.pending_queue.empty():
                         Req=self.pending_queue.get()
                         if self.check(Req):
-                            self.request_queue.put(Req)
+                            if self.LOG:
+                                print("worker-%d can Pull the parameter:  "%Req.src,time.time())
+                            value=self.KVStore(Req.key)[Req.key].detach().clone()
+                            Res=ResMsg(msgtype="PullResMsg",key=Req.key,value=value,src=Req.dst,dst=Req.src)
+                            self.response_queue.put(Res)
                         else:
                             self.pending_queue.put(Req)
                             break
