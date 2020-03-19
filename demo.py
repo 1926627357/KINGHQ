@@ -66,7 +66,7 @@ optimizer=torch.optim.SGD(model.parameters(), lr=0.002)
 loss_function = nn.CrossEntropyLoss()
 
 
-optimizer=KINGHQ.KINGHQ_Optimizer(optimizer,model,{"consistency": "BSP"})
+optimizer=KINGHQ.KINGHQ_Optimizer(optimizer,model,{"consistency": "ASP"})
 # print("HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH")
 
 import time

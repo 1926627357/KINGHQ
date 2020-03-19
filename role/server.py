@@ -142,14 +142,16 @@ class Server(Role):
             pass
     
     def do_(self):
-        
+        # we use the pending list to hold the pull request that cannot be responsed
+        self.pending_queue=queue.PriorityQueue()
+
         while True:
             Req=self.get_request()
             if Req.type=="PushReqMsg":
                 # Res=ResMsg(msgtype="PushResMsg")
                 # self.response_queue.put(Res)
-                self.clock_vector[Req.key][Req.src]+=1
-                self.global_clock[Req.key]=min(self.clock_vector[Req.key].values())
+                
+
                 if self.LOG:
                     print("I get the Push request from the queue, which is from worker-%d:  "%Req.src,time.time())
                 self.aggregate(req=Req)
@@ -157,6 +159,19 @@ class Server(Role):
                 # self.KVStore(Req.key)[Req.key].grad=Req.value
                 # self.optimizer.step()
                 # self.KVStore(Req.key)[Req.key].grad=None
+                self.clock_vector[Req.key][Req.src]+=1
+                if min(self.clock_vector[Req.key].values()) > self.global_clock[Req.key]:
+                    # the slowest one catch up now!
+                    self.global_clock[Req.key]=min(self.clock_vector[Req.key].values())
+                    while not self.pending_queue.empty():
+                        Req=self.pending_queue.get()
+                        if self.check(Req):
+                            self.request_queue.put(Req)
+                        else:
+                            self.pending_queue.put(Req)
+                            break
+                else:
+                    pass
             elif Req.type=="PullReqMsg":
                 # value=self.KVStore(Req.key)[Req.key].detach().clone()
                 # Res=ResMsg(msgtype="PullResMsg",key=Req.key,value=value,src=Req.dst,dst=Req.src)
@@ -170,7 +185,10 @@ class Server(Role):
                     Res=ResMsg(msgtype="PullResMsg",key=Req.key,value=value,src=Req.dst,dst=Req.src)
                     self.response_queue.put(Res)
                 else:
-                    self.request_queue.put(Req)
+                    # the server cannot send the value
+                    # self.request_queue.put(Req)
+                    Req.priority=self.clock_vector[Req.key][Req.src]
+                    self.pending_queue.put(Req)
 
 if __name__ == "__main__":
     pass

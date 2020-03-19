@@ -13,6 +13,7 @@ class ReqMsg(object):
         self.comm_tag={"reqres":0}
         self.comm_code={"pushreq":0,"pullreq":1}
         self.status="init"
+        self.priority=0
     def recv_head(self):
         self.status="recv_head"
         self.handles=[]
@@ -45,7 +46,8 @@ class ReqMsg(object):
         for each in self.handles:
             result=result and each.is_completed()
         return result
-
+    def __lt__(self,other):
+        return self.priority < other.priority
     
         
         
