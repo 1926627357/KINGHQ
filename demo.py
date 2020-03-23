@@ -28,12 +28,12 @@ size=KINGHQ.size()
 model=mobilenetv2.MobileNetV2().to(device)
 # model.train()
 optimizer=torch.optim.SGD(model.parameters(), lr=0.02)
-# check_point=torch.load('/home/haiqwa/Documents/KINGHQ/config/mod_optim/Lenet')
-# model.load_state_dict(check_point['state_dict'])
+check_point=torch.load('/home/haiqwa/Documents/KINGHQ/config/mod_optim/Lenet')
+model.load_state_dict(check_point['state_dict'])
 # optimizer.load_state_dict(check_point['optimizer'])
 loss_function = nn.CrossEntropyLoss()
 optimizer=KINGHQ.KINGHQ_Optimizer(optimizer,model,{"consistency": "BSP","op":"SUM","staleness":0})
-
+LOG_PATH='/home/haiqwa/Documents/KINGHQ/log/BSP_9W_9S.csv'
 
 
 # train_dataset = \
@@ -70,7 +70,7 @@ if rank==0:
     bar=Bar(total=len(train_loader), description=' worker progress')
 log=Log(title='Single machine',\
             Axis_title=['iterations', 'time', 'accuracy'],\
-            path='/home/haiqwa/Documents/KINGHQ/log/BSP.csv',\
+            path=LOG_PATH,\
             step=21)
 Dice=Dice(6)
 iteration=0
