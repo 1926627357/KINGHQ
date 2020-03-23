@@ -32,7 +32,7 @@ optimizer=torch.optim.SGD(model.parameters(), lr=0.02)
 # model.load_state_dict(check_point['state_dict'])
 # optimizer.load_state_dict(check_point['optimizer'])
 loss_function = nn.CrossEntropyLoss()
-optimizer=KINGHQ.KINGHQ_Optimizer(optimizer,model,{"consistency": "BSP"})
+optimizer=KINGHQ.KINGHQ_Optimizer(optimizer,model,{"consistency": "BSP","op":"SUM","staleness":0})
 
 
 
@@ -68,32 +68,14 @@ train_loader = torch.utils.data.DataLoader(
 import time
 if rank==0:
     bar=Bar(total=len(train_loader), description=' worker progress')
-    log=Log(title='Single machine',\
+log=Log(title='Single machine',\
             Axis_title=['iterations', 'time', 'accuracy'],\
             path='/home/haiqwa/Documents/KINGHQ/log/BSP.csv',\
             step=21)
 Dice=Dice(6)
 iteration=0
-for epoch in range(EPOCH):
-    # train_sampler.set_epoch(epoch)
-    # train_dataset = \
-    # datasets.CIFAR10('~/Documents/.datasets/CIFAR10'+'data-%d' % KINGHQ.rank(), train=True, download=True,
-    #                     transform=transforms.Compose([
-    #                                     transforms.RandomCrop(32, padding=4),
-    #                                     transforms.RandomHorizontalFlip(),
-    #                                     transforms.RandomRotation(15),
-    #                                     transforms.ToTensor(),
-    #                                     transforms.Normalize(
-    #                                         (0.5070751592371323, 0.48654887331495095, 0.4409178433670343), 
-    #                                         (0.2673342858792401, 0.2564384629170883, 0.27615047132568404)
-    #                                         )
-    #                                 ])
-    #                )
-    # # # Horovod: use DistributedSampler to partition the training data.
-    # train_sampler = torch.utils.data.distributed.DistributedSampler(
-    #     train_dataset, num_replicas=KINGHQ.size(), rank=KINGHQ.rank())
-    # train_loader = torch.utils.data.DataLoader(
-    #     train_dataset, batch_size=128, sampler=train_sampler, **kwargs)
+for epoch in range(1):
+    
 
     
     for batch_idx, (data, target) in enumerate(train_loader):
@@ -107,10 +89,10 @@ for epoch in range(EPOCH):
         output = model(data)
         loss = loss_function(output, target)
         
-        if rank==0:
-            predict=torch.argmax(output, dim=1)
-            accuracy=float(torch.sum(predict == target))/data.size(0)
-            log.log([iteration/1, time.time(), accuracy])
+        
+        predict=torch.argmax(output, dim=1)
+        accuracy=float(torch.sum(predict == target))/data.size(0)
+        log.log([iteration/1, time.time(), accuracy])
         
         loss.backward()
         optimizer.step()

@@ -39,6 +39,12 @@ class Server(Role):
 
         if self.strategy['consistency']=="BSP":
             self.buffer={key:None for key in self.my_param_keys}
+            if "op" not in self.strategy.keys() or self.strategy['op']=="SUM":
+                self.op="SUM"
+            else:
+                self.op="Average"
+        elif self.strategy['consistency']=="SSP":
+            self.staleness=self.strategy['staleness']
 
     def register_KVStore(self):
         super().register_KVStore()
@@ -98,16 +104,16 @@ class Server(Role):
                 else:
                     self.response_queue.put(Res)
 
-    def aggregate(self,req,op=None):
+    def aggregate(self,req):
         if self.strategy['consistency']=="ASP":
             pass
         elif self.strategy['consistency']=="BSP":
-            if op is None or op=="SUM":
+            if self.op =="SUM":
                 if self.buffer[req.key] is None:
                     self.buffer[req.key]=req.value
                 else:
                     self.buffer[req.key].add_(req.value)
-            elif op=="Average":
+            elif self.op=="Average":
                 if self.buffer[req.key] is None:
                     self.buffer[req.key]=req.value/len(self.util.workers)
                 else:
@@ -128,7 +134,9 @@ class Server(Role):
                 self.buffer[req.key]=None
                 self.KVStore(req.key)[req.key].grad=None
         elif self.strategy['consistency']=="SSP":
-            pass
+            self.KVStore(req.key)[req.key].grad=req.value
+            self.optimizer.step()
+            self.KVStore(req.key)[req.key].grad=None
     def check(self,req):
         if self.strategy['consistency']=="ASP":
             return True
@@ -139,7 +147,11 @@ class Server(Role):
             else:
                 return False
         elif self.strategy['consistency']=="SSP":
-            pass
+            if self.clock_vector[req.key][req.src] - self.staleness <= self.global_clock[req.key]:
+                # when the requester run no more 0 step than the slowest one
+                return True
+            else:
+                return False
     
     def do_(self):
         # we use the pending list to hold the pull request that cannot be responsed

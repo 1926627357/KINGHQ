@@ -61,14 +61,14 @@ train_dataset = \
 #         train_dataset, num_replicas=KINGHQ.size(), rank=KINGHQ.rank(),shuffle=True)
 train_sampler = DistSampler(train_dataset,num_replicas=KINGHQ.size(),rank=KINGHQ.rank(),shuffle=True,total_epoch=EPOCH)
 train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=128, sampler=train_sampler, **kwargs)
+        train_dataset, batch_size=128, sampler=train_sampler, drop_last=True, **kwargs)
 
 
 
 import time
 if rank==0:
     bar=Bar(total=len(train_loader), description=' worker progress')
-    log=Log(title='Single machine',\
+log=Log(title='Single machine',\
             Axis_title=['iterations', 'time', 'accuracy'],\
             path='/home/haiqwa/Documents/KINGHQ/log/BSP.csv',\
             step=21)
@@ -107,10 +107,10 @@ for epoch in range(EPOCH):
         output = model(data)
         loss = loss_function(output, target)
         
-        if rank==0:
-            predict=torch.argmax(output, dim=1)
-            accuracy=float(torch.sum(predict == target))/data.size(0)
-            log.log([iteration/1, time.time(), accuracy])
+        
+        predict=torch.argmax(output, dim=1)
+        accuracy=float(torch.sum(predict == target))/data.size(0)
+        log.log([iteration/1, time.time(), accuracy])
         
         loss.backward()
         optimizer.step()
