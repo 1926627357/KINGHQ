@@ -17,7 +17,7 @@ import torchvision.transforms as transforms
 
 KINGHQ.init()
 CUDA=True
-EPOCH=10
+EPOCH=140
 device = torch.device('cuda:{}'.format(KINGHQ.local_rank()) if CUDA else 'cpu')
 kwargs = {'pin_memory': True,'num_workers': 2} if CUDA else {}
 # # In fact the rank is the worker rank
@@ -26,10 +26,11 @@ rank=KINGHQ.rank()
 size=KINGHQ.size()
 
 model=mobilenetv2.MobileNetV2().to(device)
+# check_point=torch.load('/home/haiqwa/Documents/KINGHQ/config/mod_optim/mobilenetv2')
+# model.load_state_dict(check_point['state_dict'])
 # model.train()
-optimizer=torch.optim.SGD(model.parameters(), lr=0.02)
-check_point=torch.load('/home/haiqwa/Documents/KINGHQ/config/mod_optim/Lenet')
-model.load_state_dict(check_point['state_dict'])
+optimizer=torch.optim.SGD(model.parameters(), lr=0.001,momentum=0.9)
+
 # optimizer.load_state_dict(check_point['optimizer'])
 loss_function = nn.CrossEntropyLoss()
 optimizer=KINGHQ.KINGHQ_Optimizer(optimizer,model,{"consistency": "BSP","op":"SUM","staleness":0})
@@ -75,9 +76,6 @@ log=Log(title='Single machine',\
 Dice=Dice(6)
 iteration=0
 for epoch in range(1):
-    
-
-    
     for batch_idx, (data, target) in enumerate(train_loader):
         if CUDA:
             data, target = data.to(device), target.to(device)
@@ -90,15 +88,18 @@ for epoch in range(1):
         loss = loss_function(output, target)
         
         
-        predict=torch.argmax(output, dim=1)
-        accuracy=float(torch.sum(predict == target))/data.size(0)
-        log.log([iteration/1, time.time(), accuracy])
+        # predict=torch.argmax(output, dim=1)
+        # accuracy=float(torch.sum(predict == target))/data.size(0)
+        log.log([iteration/1, time.time(), loss.item()])
         
         loss.backward()
         optimizer.step()
         
         if rank==0:
             bar()
+
+        if batch_idx%size==rank:
+            time.sleep(0.7)
 
 if rank==0:
     log.data_processing('interval', data=log.get_column_data('time'))

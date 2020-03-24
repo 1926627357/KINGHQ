@@ -18,7 +18,7 @@ import torchvision.transforms as transforms
 # KINGHQ.init()
 CUDA=True
 device = torch.device('cuda:{}'.format(0) if CUDA else 'cpu')
-kwargs = {'pin_memory': True} if CUDA else {}
+kwargs = {'pin_memory': True,'num_workers': 2} if CUDA else {}
 # # In fact the rank is the worker rank
 # # the size is the worker size
 # rank=KINGHQ.rank()
@@ -41,21 +41,23 @@ train_dataset = \
                    )
 
 # # Horovod: use DistributedSampler to partition the training data.
-# train_sampler = torch.utils.data.distributed.DistributedSampler(
-#     train_dataset, num_replicas=1, rank=0, shuffle=True)
-EPOCH=10
-train_sampler = DistSampler(train_dataset,num_replicas=9,rank=0,shuffle=True,total_epoch=EPOCH)
+train_sampler = torch.utils.data.distributed.DistributedSampler(
+    train_dataset, num_replicas=1, rank=0, shuffle=True)
+EPOCH=1
+# train_sampler = DistSampler(train_dataset,num_replicas=1,rank=0,shuffle=True,total_epoch=EPOCH)
 train_loader = torch.utils.data.DataLoader(
     train_dataset, batch_size=128, sampler=train_sampler, **kwargs)
 
 
 
-model=vgg.vgg19().to(device)
-model.train()
-optimizer=torch.optim.SGD(model.parameters(), lr=0.002)
+model=mobilenetv2.mobilenetv2()
+# model.train()
+check_point=torch.load('/home/haiqwa/Documents/KINGHQ/config/mod_optim/mobilenetv2')
+model.load_state_dict(check_point)
+model=model.to(device)
+optimizer=torch.optim.SGD(model.parameters(), lr=0.02)
 
-# check_point=torch.load('/home/haiqwa/Documents/KINGHQ/config/mod_optim/Lenet')
-# model.load_state_dict(check_point['state_dict'])
+
 # optimizer.load_state_dict(check_point['optimizer'])
 
 
@@ -69,11 +71,11 @@ if rank==0:
     bar=Bar(total=len(train_loader), description=' worker progress')
     log=Log(title='Single machine',\
             Axis_title=['iterations', 'time', 'accuracy'],\
-            path='/home/haiqwa/Documents/KINGHQ/log/ASP.csv',\
+            path='/home/haiqwa/Documents/KINGHQ/log/single_2.csv',\
             step=21)
 Dice=Dice(6)
 iteration=0
-for epoch in range(1):
+for epoch in range(EPOCH):
     # train_sampler.set_epoch(epoch)
     for batch_idx, (data, target) in enumerate(train_loader):
         if CUDA:
