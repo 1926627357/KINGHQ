@@ -126,17 +126,23 @@ class Server(Role):
 
     def apply(self,req):
         if self.strategy['consistency']=="ASP":
+            if self.get_lr is not None:
+                self.LR_Scheduler.step(req.key)
             self.KVStore(req.key)[req.key].grad=req.value
             self.optimizer.step()
             self.KVStore(req.key)[req.key].grad=None
         elif self.strategy['consistency']=="BSP":
             if max(self.clock_vector[req.key].values())==self.global_clock[req.key]:
                 # apply when the server aggregate all the gradients from workers
+                if self.get_lr is not None:
+                    self.LR_Scheduler.step(req.key)
                 self.KVStore(req.key)[req.key].grad=self.buffer[req.key]
                 self.optimizer.step()
                 self.buffer[req.key]=None
                 self.KVStore(req.key)[req.key].grad=None
         elif self.strategy['consistency']=="SSP":
+            if self.get_lr is not None:
+                self.LR_Scheduler.step(req.key)
             self.KVStore(req.key)[req.key].grad=req.value
             self.optimizer.step()
             self.KVStore(req.key)[req.key].grad=None
