@@ -17,7 +17,7 @@ import torchvision.transforms as transforms
 
 KINGHQ.init()
 CUDA=True
-EPOCH=140
+EPOCH=5
 device = torch.device('cuda:{}'.format(KINGHQ.local_rank()) if CUDA else 'cpu')
 kwargs = {'pin_memory': True,'num_workers': 2} if CUDA else {}
 # # In fact the rank is the worker rank
@@ -29,12 +29,12 @@ model=mobilenetv2.MobileNetV2().to(device)
 # check_point=torch.load('/home/haiqwa/Documents/KINGHQ/config/mod_optim/mobilenetv2')
 # model.load_state_dict(check_point['state_dict'])
 # model.train()
-optimizer=torch.optim.SGD(model.parameters(), lr=0.001,momentum=0.9)
+optimizer=torch.optim.SGD(model.parameters(), lr=0.01,momentum=0.9)
 
 # optimizer.load_state_dict(check_point['optimizer'])
 loss_function = nn.CrossEntropyLoss()
 optimizer=KINGHQ.KINGHQ_Optimizer(optimizer,model,{"consistency": "BSP","op":"SUM","staleness":0})
-LOG_PATH='/home/haiqwa/Documents/KINGHQ/log/BSP_9W_9S.csv'
+LOG_PATH='/home/haiqwa/Documents/KINGHQ/log/BSP_9W_9S_mobilenetv2_cifar100.csv'
 
 
 # train_dataset = \
@@ -45,7 +45,7 @@ LOG_PATH='/home/haiqwa/Documents/KINGHQ/log/BSP_9W_9S.csv'
 #                    ]))
 
 train_dataset = \
-    datasets.CIFAR10('~/Documents/.datasets/CIFAR10'+'data-%d' % KINGHQ.rank(), train=True, download=True,
+    datasets.CIFAR100('~/Documents/.datasets/CIFAR100'+'data-%d' % KINGHQ.rank(), train=True, download=True,
                         transform=transforms.Compose([
                                         transforms.RandomCrop(32, padding=4),
                                         transforms.RandomHorizontalFlip(),
@@ -72,7 +72,7 @@ if rank==0:
 log=Log(title='Single machine',\
             Axis_title=['iterations', 'time', 'accuracy'],\
             path=LOG_PATH,\
-            step=21)
+            step=1)
 Dice=Dice(6)
 iteration=0
 for epoch in range(1):
@@ -88,9 +88,9 @@ for epoch in range(1):
         loss = loss_function(output, target)
         
         
-        # predict=torch.argmax(output, dim=1)
-        # accuracy=float(torch.sum(predict == target))/data.size(0)
-        log.log([iteration/1, time.time(), loss.item()])
+        predict=torch.argmax(output, dim=1)
+        accuracy=float(torch.sum(predict == target))/data.size(0)
+        log.log([iteration/1, time.time(), accuracy])
         
         loss.backward()
         optimizer.step()
@@ -98,12 +98,12 @@ for epoch in range(1):
         if rank==0:
             bar()
 
-        if batch_idx%size==rank:
-            time.sleep(0.7)
+        # if batch_idx%size==rank:
+        #     time.sleep(0.7)
 
 if rank==0:
     log.data_processing('interval', data=log.get_column_data('time'))
-    log.data_processing('rolling_mean',data=log.get_column_data('accuracy'),cycle=12)
+    log.data_processing('rolling_mean',data=log.get_column_data('accuracy'),cycle=1)
     log.write()
 
 
