@@ -341,5 +341,30 @@ class DistSampler(Sampler):
         indices = indices[self.rank:self.total_size:self.num_replicas]
         return iter(indices)
 
+class get_lr(object):
+    def __init__(self):
+        pass
+    def __call__(self,step):
+        pass
 
+class LR_Scheduler(object):
+    def __init__(self,get_lr,optimizer,kvstore=None):
+        self.get_lr=get_lr
+        self.optimizer=optimizer
+        self.kvstore=kvstore
+        self.param_group_map={}
+        self.param_step_map={}
+        for group in self.optimizer.param_groups:
+            for p in group['params']:
+                self.param_group_map[p]=group
+                self.param_step_map[p]=0
+    
+    def step(self,key):
+        param=self.kvstore(key)[key]
+        step=self.param_step_map[param]
+        group=self.param_group_map[param]
+        new_lr=self.get_lr(step)
+        group['lr']=new_lr
+        self.param_step_map[param]+=1
+        return new_lr
 
