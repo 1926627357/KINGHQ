@@ -26,7 +26,7 @@ class _DistributedOptimizer(torch.optim.Optimizer):
         super(self.__class__, self).zero_grad()
 
 
-def KINGHQ_Optimizer(Optimizer, model, strategy):
+def KINGHQ_Optimizer(Optimizer, model, strategy, get_lr=None):
     cls = type(Optimizer.__class__.__name__, (Optimizer.__class__,),
                 dict(_DistributedOptimizer.__dict__))
     # return cls(Optimizer.param_groups,worker)
@@ -35,7 +35,7 @@ def KINGHQ_Optimizer(Optimizer, model, strategy):
         pass
     elif util.role=="server":
         model.to("cpu")
-        server=Server(util=util,optimizer=Optimizer,strategy= strategy)
+        server=Server(util=util,optimizer=Optimizer,strategy= strategy, get_lr=get_lr)
         server.init()
         server.do_()
 
