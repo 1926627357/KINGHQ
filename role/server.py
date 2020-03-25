@@ -5,10 +5,10 @@ import threading
 import queue
 from KINGHQ.msg.msg import ReqMsg,ResMsg
 import time
-
+from KINGHQ.utils.utils import LR_Scheduler
 
 class Server(Role):
-    def __init__(self, util, optimizer, strategy):
+    def __init__(self, util, optimizer, strategy, get_lr=None):
         # worker_rank: denote all workers' ranks in a format of list
         super().__init__(util.get_KVStore())
         self.LOG=False
@@ -20,7 +20,7 @@ class Server(Role):
         self.response_queue=queue.Queue()
         self.Inbox=threading.Thread(target=self.loop_Inbox)
         self.Outbox=threading.Thread(target=self.loop_Outbox)
-        
+        self.get_lr=get_lr
     def init(self):
         self.Inbox.start()
         self.Outbox.start()
@@ -45,6 +45,9 @@ class Server(Role):
                 self.op="Average"
         elif self.strategy['consistency']=="SSP":
             self.staleness=self.strategy['staleness']
+        
+        if self.get_lr is not None:
+            self.LR_Scheduler=LR_Scheduler(self.get_lr,self.optimizer,self.KVStore)
 
     def register_KVStore(self):
         super().register_KVStore()
